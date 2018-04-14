@@ -1,0 +1,145 @@
+#! /usr/bin/env bash
+
+srcname=gnu_linux_from_scratch
+srcver=1.0
+info='Gnu/Linux system SRCBUILD'
+srcurl="https://github.com/awolbox/glfs"
+srcget="${srcurl}.git"
+srccpy=('GPLv3')
+#srcsig("")
+depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+		 'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
+		 'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
+provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+		  'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
+		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
+#conflicts=('')
+
+srcbuild(){
+		
+		BUILD_DEV=/dev/sdb
+		BUILD_DIR=/mnt/ninja
+		BUILD_TGT="$(uname -m)-my-linux-gnu"
+		TBX_USER='tbx'
+		TBX_DIR=${BUILD_DIR}/${TBX_USER}
+		SOURCE_DIR=${BUILD_DIR}/src
+		#MAKEFLAGS=('-j 8')
+
+		export BUILD_DEV BUILD_DIR BUILD_TGT TBX_USR TBX_DIR SOURCE_DIR #MAKEFLAGS
+
+		make_disk(){
+				
+				disk_prep(){ securely wipe disk
+		
+						shred -n 3 -z -v $BUILD_DEV
+
+				};disk_part(){ # partition disk
+
+						parted $BUILD_DEV mklabel gpt
+		        		parted $BUILD_DEV mkpart linux 0% 2M
+		        		parted $BUILD_DEV set 1 bios_grub on
+						parted $BUILD_DEV mkpart linux fat32 2M 512MB               # /boot
+		        		parted $BUILD_DEV mkpart linux linux-swap 512MB 33GB        # [swap]
+		        		parted $BUILD_DEV mkpart linux ext4 33GB 47GB               # /
+						parted $BUILD_DEV mkpart linux ext4 47GB 63GB               # /usr
+				        parted $BUILD_DEV mkpart linux ext4 63GB 68GB               # /opt
+				        parted $BUILD_DEV mkpart linux ext4 68GB 70GB               # /etc
+				        parted $BUILD_DEV mkpart linux ext4 70GB 75GB               # /var
+				        parted $BUILD_DEV mkpart linux ext4 75GB 130GB              # /usr/src
+				        parted $	BUILD_DEV mkpart linux ext4 130GB 100%              # /home
+
+				};disk_mkfs(){ # make filesystems on disk
+                        
+  			      		mkfs.fat -F32 ${BUILD_DEV}2
+				        mkfs.ext4 ${BUILD_DEV}4
+				        mkfs.ext4 ${BUILD_DEV}5
+				        mkfs.ext4 ${BUILD_DEV}6
+				        mkfs.ext4 ${BUILD_DEV}7
+				        mkfs.ext4 ${BUILD_DEV}8
+				        mkfs.ext4 ${BUILD_DEV}9
+				        mkfs.ext4 ${BUILD_DEV}10
+				        mkswap ${BUILD_DEV}3
+
+				};disk_mnts(){ # mount disk to host
+                        
+		        		mkdir $DIR
+				        mount -v ${BUILD_DEV}4 $DIR
+				        mkdir -pv ${BUILD_DIR}/{boot,usr,opt,etc,var,home} 
+				        mount -v ${BUILD_DEV}2 $BUILD_DIR/boot
+				        mount -v ${BUILD_DEV}5 $BUILD_DIR/usr
+				        mount -v ${BUILD_DEV}6 $BUILD_DIR/opt
+				        mount -v ${BUILD_DEV}7 $BUILD_DIR/etc
+				        mount -v ${BUILD_DEV}8 $BUILD_DIR/var
+				        mkdir -pv $BUILD_DIR/usr/src
+				        mount -v ${BUILD_DEV}9 $BUILD_DIR/usr/src
+				        mount -v ${BUILD_DEV}10 $BUILD_DIR/home
+						swapon ${BUILD_DEV}3
+				}
+                
+		};prep_source(){
+
+				toolbox_depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+								 'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
+								 'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
+		
+				for x in ${toolbox_depends[*]}
+				do
+						dep=$(ls $SOURCE_DIR | grep --regex="$x" -w -x)
+						if [ -d "$dep" ];
+						then
+								:
+						fi
+				done
+
+		};prep_toolbox(){ 
+
+				toolbox_setup(){ # make/set toolbox user/environment/sources
+		
+						# TBX User
+						mkdir -v $BUILD_DIR/$TBX_USR
+						groupadd $TBX_USR
+						useradd -s /bin/bash -g $TBX_USR -m -k /dev/null $TBX_USR
+						#passwd $TBX_USR
+		
+						# TBX User Environment
+						touch /home/$TBX_USR/.bashrc
+						chmod 600 /home/$TBX_USR/.bashrc
+						chown ${TBX_USR}:${TBX_USR} /home/$TBX_USR/.bashrc
+						echo "
+						;set +h
+						;umask 022
+						;LC_ALL=C
+						;PATH=/$TBX_USR/bin:/bin:/usr/bin
+						;export LC_ALL PATH
+						" | cut -d ";" -f 2 > /home/$TBX_USR/.bashrc
+						touch /home/$TBX_USR/.bash_profile
+						chmod 600 /home/$TBX_USR/.bash_profile
+						chown ${TBX_USR}:${TBX_USR} /home/$TBX_USR/.bash_profile
+						echo "
+						;exec env -i HOME=\$HOME TERM=\$TERM PS1='> ' /bin/bash
+						" | cut -d ";" -f 2 > /home/$TBX_USR/.bash_profile 
+				
+						# TBX User Source
+						chown -R ${TBX_USR}:${TBX_USR} $TBX_DIR
+						chown -R ${TBX_USR}:${TBX_USR} $SOURCE_DIR
+						ln -sv $TBX_DIR /
+						cp -v ./build.sh /home/$TBX_USR
+						chown ${TBX_USR}:${TBX_USR} /home/$TBX_USR/build.sh
+
+				};toolbox_build(){ # build toolbox
+		
+						su $TBX_USR -c "source /home/$TBX_USR/.bashrc && . /home/$TBX_USR/build.sh --cc"
+		
+				}
+
+		};cctoolbox(){
+		
+				if [ $SOURCE_DIR ];
+				then
+						:
+				fi
+
+
+		}
+
+}

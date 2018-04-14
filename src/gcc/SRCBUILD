@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+srcname=gcc
+srcver=7.3.0
+
+info='GCC is the GNU Compiler Collection. It provides compiler front-ends for several languages, including C, C++, Objective-C, Fortran, Java, Ada, and Go. \
+		It also includes runtime support libraries for these languages. '
+srcurl=(https://www.gnu.org/software/$srcname/)
+srcget=(https://ftp.gnu.org/gnu/${srcname}/${srcname}-${srcver}/${srcname}-${srcver}.tar.gz)
+srcsig=(${srcget}.sig)
+srccpy=('GPLv3' 'LGPLv2.1')
+depends=('mpfr' 'gmp' 'mpc')
+provides=('c++' 'cc - link to gcc' 'cpp' 'g++' 'gcc' 'gcc-ar' 'gcc-nm' 'gcc-ranlib' 'gcov' 
+		  'libasan.{a,so}' 'libatomic.{a,so}' 'libgcc.a' 'libgcc_eh.a' 'libgcc_s.so' 'libgcov.a' 'libgomp.{a,so}' 'libiberty.a' 'libitm.{a,so}'
+		  'liblto_plugin.so' 'libquadmath.{a,so}' 'libssp.{a,so}' 'libssp_nonshared.a' 'libstdc++.{a,so}' 'libsupc++.a' 'libtsan.{a,so}'
+		  '/usr/include/c++' '/usr/lib/${srcname}' '/usr/libexec/${srcname}' '/usr/share/${srcname}-${srcver}')
+conflicts=('')
+
+ccsrcbuild_pass_1(){
+		
+		cd $SRCDIR/$srcname
+		srcuntar
+		mv -v ${srcname}-${srcver} $srcver
+		cd $srcver		   
+		
+		tar xzvf ../mpfr/mpfr-4.0.1.tar.xz
+	   	tar xzvf ../gmp/gmp-6.1.2.tar.xz
+	   	tar xzvf ../mpc/mpc-1.1.0.tar.gz
+		
+		mv -v mpfr-4.0.1 mpfr; mv -v gmp-6.1.2 gmp; mv -v mpc-1.1.0 mpc
+				
+		for file in gcc/config/{linux,i386,/{linux,64}}.h 
+		do
+				cp -uv $file{,.orig}
+				sed -e 's@/lib\(64\)\?\(32\)\?/ld@/${TBXUSR}&@g' \
+					-e 's@/usr@/${TBXUSR}@g' $file.orig > $file
+				echo "
+				;#undef STANDARD_STARTFILE_PREFIX_1
+				;#undef STANDARD_STARTFILE_PREFIX_2
+				;#define STANDARD_STARTFILE_PREFIX_1 '$TBXUSR/lib/'
+				;#define STANDARD_STARTFILE_PREFIX_2 ''
+				" | cut -d ";" -f 2 >> $file
+				touch $file.orig
+		done
+		case $(uname -m) in
+				x86_64)
+						sed -e '/m64=s/lib64/lib/' \
+								-i.orig ../gcc/config/i386/t-linux64 
+						;;
+		esac
+		mkdir -v $srcver/build
+		cd $srcver/build
+		 ../configure \
+			 	 --target=$TGT 										\
+				 --prefix=/$TBXUSR 									\
+				 --with-glibc-version=2.11 							\
+				 --with-sysroot=$DIR 								\
+				 --with-newlib 										\
+				 --without-headers 									\
+				 --with-local-prefix=/$TBXUSR 						\
+			  	 --with-native-system-header-dir=/$TBXUSR/include 	\
+				 --disable-nls 										\
+				 --disable-shared 									\
+				 --disable-multilib 								\
+				 --disable-decimal-float 							\
+				 --disable-threads 									\
+				 --disable-libatomatic 								\
+				 --disable-libgomp 									\
+				 --disable-libmpx 									\
+				 --disable-libquadmath 								\
+				 --disable-libssp 									\
+				 --disable-libvtv 									\
+				 --disable-libstdcxx 								\
+				 --enable-languages=c,c++
+		 make
+		 make install
+		 cd $SRCDIR
+	     rm -rfv $srcname/$srcver
+}
+
+#//:[ $USER <> ]
+

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+SRCBUILD=$(ls . | grep --regex="SRCBUILD" -x -w)
+SRARC=$(ls . | grep ".tar" | grep -v ".sig" | grep $)
+SRCKEYRING=''
+
+E_SBE=1			# error - SRCBUILD error
+
+usage(){
+
+		echo -e "Usage: `basename $0` [Options]\n"
+		echo -e "Options:\n"
+		echo -e "  -h,--help\t\tshow this help screen"
+		echo -e "  -i,--info\t\tshows various SRCBUILD information"
+		echo -e "  -d,--depends\t\tinstall dependencies \"non-interactively\""
+		echo
+
+};srcsrcbuild(){ # source SRCBUILD
+
+		if [ "$SRCBUILD" == "SRCBUILD" ] && [ -O $SRCBUILD ] && [ -r $SRCBUILD ] && [ -G $SRCBUILD ];
+		then
+				source $SRCBUILD
+		else
+				exit $E_SBE
+		fi
+
+};srcinfo(){ # parse & echo various different $vars to STDOUT
+
+		info_print(){
+				echo -e "\e[0;31mSOURCE\e[0m\n"
+				echo -e "\t$srcname - ($srcver)\n"
+				echo -e "\e[0;31mINFO\e[0m\n"
+				echo -e "  $info\n"
+				echo -e "\e[0;31mPROJECT HOME\e[0m\n"
+				echo -e "  ($srcurl)\n"	
+				echo -e "\e[0;31mLICENSE\e[0m\n"
+				echo -e "  \e[1;31mThis project is licenced under the following: \e[0m\t${srccpy[*]}\n"
+		};srcsrcbuild; info_print
+
+};srcdepends() { 
+		
+	    depnum=$(echo "${depends[*]}" | wc -w)
+		echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
+		echo -e -n "\t\e[1;31mInstall?:\e[0m "
+		read indep
+
+		if [ "$indep" == "y" ] || [ "$indep" == "Y" ] || [ $indep == "yes" ] || [ $indep == "Yes" ] || [ $indep == "YES" ];
+		then
+				for dep in ${depends[*]}	
+	    		do
+	    			:# install depends
+				done
+		elif [ "$indep" == "n" ] || [ "$indep" == "N" ] || [ $indep == "no" ] || [ $indep == "No" ] || [ $indep == "NO" ];
+		then
+				exit 1
+		fi
+
+};srcrepos(){
+
+		gnu_repo='https://ftp.gnu.org/gnu'
+		savannah_repo=''
+	
+};makesrc(){
+
+		srcsrcbuild
+		if [ -n "${depends[*]}" ];
+		then
+				srcdepends
+		elif [ -z $SRCARC ];
+		then
+				:
+		fi
+		
+		srcbuild
+
+};[ $# -eq 0 ] && usage 1 || [ -n $# ] && #[ -z $2 ] &&
+		
+		case "$1" in
+				-h|--help	) usage 0 	 ;;
+				-i|--info	) srcinfo	 ;;
+				-d|--depends) srcdepends ;;
+				'SRCBUILD'  ) makesrc	 ;;
+		esac
+		exit $?
+		
