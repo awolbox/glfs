@@ -20,12 +20,12 @@ usage(){
 		};usage_long(){
 				usage_short
 				echo -e "\nOptions:\n"
-				echo -e "  -h,--help\t\tshow this help screen"
-				echo -e "  -q,--query\t\tdisplays various information about SRCBUILD"
-				echo -e "  -i,--prompt\t\trun $(basename $0) interactively"
+				echo -e "  ${args[0]},${args[1]}\t\tshow this help screen"
+				echo -e "  ${args[2]},${args[3]}\t\tdisplays various information about SRCBUILD"
+				echo -e "  ${args[4]},${args[5]}\trun $(basename $0) interactively"
 				echo
 		};usage_error(){ 
-				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]\n"; 
+				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]"; 
 		}
 
 };srcsrbuild(){ # source SRCBUILD
@@ -86,19 +86,28 @@ usage(){
 		
 		srcbuild
 
-};[ $# -eq 0 ] && { usage; usage_error; exit 1; } || [ $# -gt 0 ] && {
-
-		[ "$*" = "SRCBUILD" ] && {
-			[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] && {
+};[ "$*" = "SRCBUILD" ] && {
+			
+		[ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
+				
 				:; 
-		};};[ "$1" = "${args[0]}" ] && {
+			
+			};};[ "$1" = "${args[0]}" ] && {
+				
 				usage; usage_short; exit $?;
+			
 			} || [ "$1" = "${args[1]}" ] && {
-				usage; usage_long; exit $?;
+				
+					usage; usage_long; exit $?;
+			
 			} || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && {
-				srcinfo; exit $?;
+				
+					srcinfo; exit $?;
+			
 			} || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
-				:; exit $?;
-		} #|| 
+				
+					:; exit $?;
+		    
+			} || usage; usage_error; exit $?
 
-}; exit $?
+
