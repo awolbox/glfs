@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+#srcname=
+#srcver=
+#info=
+
+#srcurl=()
+#srcget=()
+#srccpy=('')
+#srcsig("")
+
+#depends=('')
+#provides=('')
+#conflicts=('')
+
+#srcbuild(){
+#}
+
+#//:[ $USER <> ]
+

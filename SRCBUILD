@@ -2,14 +2,15 @@
 
 srcname=gnu_linux_from_scratch
 srcver=1.0
+srcarch=x86_64
 info='Gnu/Linux system SRCBUILD'
 srcurl="https://github.com/awolbox/glfs"
 srcget="${srcurl}.git"
 srccpy=('GPLv3')
 #srcsig("")
 depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
-		 'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
-		 'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
+		 	'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
+		 	'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
 provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		  'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
@@ -19,7 +20,7 @@ srcbuild(){
 		
 		BUILD_DEV=/dev/sdb
 		BUILD_DIR=/mnt/ninja
-		BUILD_TGT="$(uname -m)-my-linux-gnu"
+		BUILD_TGT="$(uname -m)-tbx-linux-gnu"
 		TBX_USER='tbx'
 		TBX_DIR=${BUILD_DIR}/${TBX_USER}
 		SOURCE_DIR=${BUILD_DIR}/src
@@ -29,9 +30,11 @@ srcbuild(){
 
 		make_disk(){
 				
-				disk_prep(){ securely wipe disk
+				disk_prep(){ # securely wipe disk
 		
-						shred -n 3 -z -v $BUILD_DEV
+						#shred -n 3 -z -v $BUILD_DEV
+						dd if=/dev/urandom of=$BUILD_DEV bs=4096 status=progress &&
+								dd if=/dev/zero of/$BUILD_DEV bs=4096 status=progress
 
 				};disk_part(){ # partition disk
 
@@ -78,20 +81,9 @@ srcbuild(){
                 
 		};prep_source(){
 
-				toolbox_depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
-								 'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
-								 'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
-		
-				for x in ${toolbox_depends[*]}
-				do
-						dep=$(ls $SOURCE_DIR | grep --regex="$x" -w -x)
-						if [ -d "$dep" ];
-						then
-								:
-						fi
-				done
+						:
 
-		};prep_toolbox(){ 
+		};make_toolbox(){ 
 
 				toolbox_setup(){ # make/set toolbox user/environment/sources
 		
@@ -123,23 +115,23 @@ srcbuild(){
 						chown -R ${TBX_USR}:${TBX_USR} $TBX_DIR
 						chown -R ${TBX_USR}:${TBX_USR} $SOURCE_DIR
 						ln -sv $TBX_DIR /
-						cp -v ./build.sh /home/$TBX_USR
-						chown ${TBX_USR}:${TBX_USR} /home/$TBX_USR/build.sh
+						cp -v ./* /home/$TBX_USR
+						chown -R ${TBX_USR}:${TBX_USR} /home/$TBX_USR
 
 				};toolbox_build(){ # build toolbox
 		
-						su $TBX_USR -c "source /home/$TBX_USR/.bashrc && . /home/$TBX_USR/build.sh --cc"
+						su $TBX_USR -c "source /home/$TBX_USR/.bashrc && source /home/$TBX_USR/SRCBUILD && cctoolbox"
 		
 				}
 
 		};cctoolbox(){
 		
-				if [ $SOURCE_DIR ];
-				then
-						:
-				fi
+				:
 
-
-		}
+		}; if [ -z "$#" ];
+		then
+				make_disk; disk_prep; disk_part; disk_mkfs; disk_mnts
+				make_toolbox; toolbox_setup; toolbox_build
+		fi
 
 }

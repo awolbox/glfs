@@ -1,23 +1,36 @@
 #!/usr/bin/env bash
 
-SRCBUILD=$(ls . | grep --regex="SRCBUILD" -x -w)
-SRARC=$(ls . | grep ".tar" | grep -v ".sig" | grep $)
-SRCKEYRING=''
+SRCBUILD=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?) 
+SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
+SRCKEYRING=$SOURCE_DIR/srcman.kys
+
+args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
 E_SBE=1			# error - SRCBUILD error
 
 usage(){
+		
+		largs(){
+				for x in ${args[@]}
+						do
+								echo -n "[ $x ] "
+						done
+		};usage_short(){
+				echo -e "Usage: $(basename $0) $(largs)... [ SRCBUILD ]"
+		};usage_long(){
+				usage_short
+				echo -e "\nOptions:\n"
+				echo -e "  -h,--help\t\tshow this help screen"
+				echo -e "  -q,--query\t\tdisplays various information about SRCBUILD"
+				echo -e "  -i,--prompt\t\trun $(basename $0) interactively"
+				echo
+		};usage_error(){ 
+				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]\n"; 
+		}
 
-		echo -e "Usage: `basename $0` [Options]\n"
-		echo -e "Options:\n"
-		echo -e "  -h,--help\t\tshow this help screen"
-		echo -e "  -i,--info\t\tshows various SRCBUILD information"
-		echo -e "  -d,--depends\t\tinstall dependencies \"non-interactively\""
-		echo
+};srcsrbuild(){ # source SRCBUILD
 
-};srcsrcbuild(){ # source SRCBUILD
-
-		if [ "$SRCBUILD" == "SRCBUILD" ] && [ -O $SRCBUILD ] && [ -r $SRCBUILD ] && [ -G $SRCBUILD ];
+		if [ "$SRCBUILD" -eq 0 ] && [ -O $SRCBUILD ] && [ -r $SRCBUILD ] && [ -G $SRCBUILD ] [ -n $SRCBUILD ];
 		then
 				source $SRCBUILD
 		else
@@ -39,7 +52,7 @@ usage(){
 
 };srcdepends() { 
 		
-	    depnum=$(echo "${depends[*]}" | wc -w)
+		depnum=$(echo "${depends[*]}" | wc -w)
 		echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
 		echo -e -n "\t\e[1;31mInstall?:\e[0m "
 		read indep
@@ -73,13 +86,19 @@ usage(){
 		
 		srcbuild
 
-};[ $# -eq 0 ] && usage 1 || [ -n $# ] && #[ -z $2 ] &&
-		
-		case "$1" in
-				-h|--help	) usage 0 	 ;;
-				-i|--info	) srcinfo	 ;;
-				-d|--depends) srcdepends ;;
-				'SRCBUILD'  ) makesrc	 ;;
-		esac
-		exit $?
-		
+};[ $# -eq 0 ] && { usage; usage_error; exit 1; } || [ $# -gt 0 ] && {
+
+		[ "$*" = "SRCBUILD" ] && {
+			[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] && {
+				:; 
+		};};[ "$1" = "${args[0]}" ] && {
+				usage; usage_short; exit $?;
+			} || [ "$1" = "${args[1]}" ] && {
+				usage; usage_long; exit $?;
+			} || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && {
+				srcinfo; exit $?;
+			} || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
+				:; exit $?;
+		} #|| 
+
+}; exit $?
