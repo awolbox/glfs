@@ -3,7 +3,7 @@
 SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
 SRCKEYRING=$SOURCE_DIR/srcman.kys
 
-args=('-h' '--help' '-q' '--query' '-i' '--interactive' 'SRCBUILD')
+args=('-h' '--help' '-q' '--query' '-i' '--interactive' )
 
 E_SBE=1			# error - SRCBUILD error
 
@@ -50,13 +50,7 @@ srcinfo() # parse & echo various different $vars to STDOUT
 				echo -e "  $srcurl\n"	
 				echo -e "\e[0;31mLICENSE\e[0m\n"
 				echo -e "  \e[1;31mThis project is licenced under the following:\e[0m ${srccpy[*]}\n"
-		}
-		
-		[ "$2" == "${args[6]}" ] && 
-				{
-						srcsrcinfo; info_print;
-				} || \
-						usage; usage_error; exit 1
+		};srcsrcbuild; info_print;
 }
 
 srcdepends() # list/get dependencies for source
@@ -98,57 +92,45 @@ makesrc() # make a source-build
 }
 
 [ "$#" -eq 0 ] &&
-		{
-				usage; usage_error 1;
-		}
-
+{		
+		usage; usage_error 1;
+}
 [ "$#" -gt 0 ] &&
+{
+		[ "$1" == "${args[0]}" ] &&
 		{
-				[ "$1" == "${args[0]}" ] &&
-						{
-								[ -z "$2" ] &&
-										{
-												usage; usage_short; exit 0;
-										}
-								}
-				[ "$1" == "${args[1]}" ] &&
-						{
-								[ -z "$2" ]
-										{
-												usage; usage_long; exit 0;
-										}
-						}
-				[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
-						{
-								[ -n "$2" ] && [ "$2" == "${args[6]}" ] &&
-										{
-												srcinfo; exit $?;
-										}
-								}
-				[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
-						{
-								:
-						}
-				[ "$1" == "${args[6]}" ] &&
-						{
-								[ -z "$2" ] &&
-										{
-												makesrc; exit $?;
-										}
-								}
-				[ -n "$2" ] &&
-						{
-								[ "$2" == "${args[6]}" ] &&
-										{
-												[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
-														{
-																srcinfo; exit $?;
-														}
-												}
-								}
-				} || \
-						{ 
-								usage; usage_error; exit 1; 
-						}
-
+				[ -z "$2" ] &&
+				{
+						usage; usage_short; exit 0;
+				}
+		}
+		[ "$1" == "${args[1]}" ] &&
+		{
+				[ -z "$2" ]
+				{
+						usage; usage_long; exit 0;
+				}
+		}
+		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] && 
+		{		
+				[ "$2" == "SRCBUILD" ] &&
+				{
+						srcinfo; exit $?;
+				}
+		}
+		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
+		{
+				:
+		}
+		[ "$1" == "${args[6]}" ] &&
+		{
+				[ -z "$2" ] &&
+				{
+						makesrc; exit $?;
+				}
+		} || \
+				{ 
+						usage; usage_error; exit 1; 
+				}
+};exit $?
 
