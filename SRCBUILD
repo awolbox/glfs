@@ -8,9 +8,9 @@ srcurl="https://github.com/awolbox/glfs"
 srcget="${srcurl}.git"
 srccpy=('GPLv3')
 #srcsig("")
-depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
-		 	'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
-		 	'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
+depends_toolchain=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+		 			'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
+		 			'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
 provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		  'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
@@ -128,10 +128,12 @@ srcbuild(){
 		
 				:
 
-		}; if [ -z "$#" ];
+		}; if [ "$#" -eq 0 ];
 		then
 				make_disk; disk_prep; disk_part; disk_mkfs; disk_mnts
 				make_toolbox; toolbox_setup; toolbox_build
+		elif [ "$#" -gt 0 ];
+		then
+				[ "$1" ==  "${arg[0]}" ] && cctoolbox || exit 1
 		fi
-
 }

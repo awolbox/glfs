@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-SRCBUILD=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?) 
 SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
 SRCKEYRING=$SOURCE_DIR/srcman.kys
 
-args=('-h' '--help' '-q' '--query' '-i' '--interactive')
+args=('-h' '--help' '-q' '--query' '-i' '--interactive' 'SRCBUILD')
 
 E_SBE=1			# error - SRCBUILD error
 
-usage(){
-		
+usage()
+{
 		largs(){
 				for x in ${args[@]}
 						do
@@ -27,31 +26,41 @@ usage(){
 		};usage_error(){ 
 				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]"; 
 		}
+}
 
-};srcsrbuild(){ # source SRCBUILD
-
-		if [ "$SRCBUILD" -eq 0 ] && [ -O $SRCBUILD ] && [ -r $SRCBUILD ] && [ -G $SRCBUILD ] [ -n $SRCBUILD ];
+srcsrcbuild() # source SRCBUILD
+{
+		if [ -f ./SRCBUILD ] && [ -O ./SRCBUILD ] && [ -r ./SRCBUILD ] && [ -G ./SRCBUILD ] && [ -n ./SRCBUILD ];
 		then
-				source $SRCBUILD
+				source ./SRCBUILD
 		else
 				exit $E_SBE
 		fi
+}
 
-};srcinfo(){ # parse & echo various different $vars to STDOUT
-
-		info_print(){
+srcinfo() # parse & echo various different $vars to STDOUT
+{
+		info_print()
+		{
 				echo -e "\e[0;31mSOURCE\e[0m\n"
 				echo -e "\t$srcname - ($srcver)\n"
 				echo -e "\e[0;31mINFO\e[0m\n"
 				echo -e "  $info\n"
 				echo -e "\e[0;31mPROJECT HOME\e[0m\n"
-				echo -e "  ($srcurl)\n"	
+				echo -e "  $srcurl\n"	
 				echo -e "\e[0;31mLICENSE\e[0m\n"
-				echo -e "  \e[1;31mThis project is licenced under the following: \e[0m\t${srccpy[*]}\n"
-		};srcsrcbuild; info_print
-
-};srcdepends() { 
+				echo -e "  \e[1;31mThis project is licenced under the following:\e[0m ${srccpy[*]}\n"
+		}
 		
+		[ "$2" == "${args[6]}" ] && 
+				{
+						srcsrcinfo; info_print;
+				} || \
+						usage; usage_error; exit 1;
+}
+
+srcdepends() # list/get dependencies for source
+{ 		
 		depnum=$(echo "${depends[*]}" | wc -w)
 		echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
 		echo -e -n "\t\e[1;31mInstall?:\e[0m "
@@ -67,14 +76,16 @@ usage(){
 		then
 				exit 1
 		fi
+}
 
-};srcrepos(){
-
+srcrepos() # source repository $vars
+{
 		gnu_repo='https://ftp.gnu.org/gnu'
-		savannah_repo=''
-	
-};makesrc(){
+		savannah_repo=''	
+}
 
+makesrc() # make a source-build
+{
 		srcsrcbuild
 		if [ -n "${depends[*]}" ];
 		then
@@ -83,31 +94,58 @@ usage(){
 		then
 				:
 		fi
-		
 		srcbuild
+}
 
-};[ "$*" = "SRCBUILD" ] && {
-			
-		[ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
-				
-				:; 
-			
-			};};[ "$1" = "${args[0]}" ] && {
-				
-				usage; usage_short; exit $?;
-			
-			} || [ "$1" = "${args[1]}" ] && {
-				
-					usage; usage_long; exit $?;
-			
-			} || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && {
-				
-					srcinfo; exit $?;
-			
-			} || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
-				
-					:; exit $?;
-		    
-			} || usage; usage_error; exit $?
+[ $# -eq 0 ] &&
+		{
+				usage; usage_error 1;
+		}
+
+[ $# -gt 0 ] &&
+		{
+				case "$1" in
+						${args[0]})
+								if [ -z "$2" ];
+								then
+										usage; usage_short
+								fi
+								;;
+						${args[1]})
+								if [ -z "$2" ];	
+								then
+										usage; usage_long
+								fi
+								;;
+						${args[2]}|${args[3]})
+								if [ -n "$2" ] && [ "$2" == "${args[6]}" ];
+								then
+										srcinfo
+								fi
+								;;
+						${args[4]}|${args[5]})
+								: 
+								;;
+						${args[6]})
+								if [ -z "$2" ];
+								then
+										makesrc
+								fi
+								;;
+						*)
+								usage; usage_error 1
+								;;
+				esac;
+				case "$2" in
+						${args[6]})
+								if [ "$1" == "${args[2]}"] || [ "$1" == "${args[3]}" ];
+								then
+										srcinfo
+								fi
+								;;
+				esac;
+		}
+
+exit $?
 
 
