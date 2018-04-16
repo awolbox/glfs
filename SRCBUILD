@@ -135,10 +135,10 @@ srcbuild(){
 				make_disk; disk_prep; disk_part; disk_mkfs; disk_mnts
 				make_toolbox; toolbox_setup; toolbox_build
 		
-		   } || [ "$#" -gt 0 ] && [ "$*" == "${args[0]}" ] && {
+		  } || [ "$#" -gt 0 ] && [ "$*" == "${args[0]}" ] && {
 				   
 				   cctoolbox
    
-   				}
+   			  }
 
 }

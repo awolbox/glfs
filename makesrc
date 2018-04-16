@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-SRCBUILD=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?) 
+SRCBUILDX=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?)
+SRCBUILD=$([ -f ])
 SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
 SRCKEYRING=$SOURCE_DIR/srcman.kys
 
@@ -8,7 +9,7 @@ args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
 E_SBE=1			# error - SRCBUILD error
 
-usage(){
+usage(){ 
 		
 		largs(){
 				for x in ${args[@]}
@@ -86,28 +87,19 @@ usage(){
 		
 		srcbuild
 
-};[ "$*" = "SRCBUILD" ] && {
-			
+}; [ "$*" = "SRCBUILD" ] && {
+		
 		[ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
 				
 				:; 
 			
-			};};[ "$1" = "${args[0]}" ] && {
-				
-				usage; usage_short; exit $?;
-			
-			} || [ "$1" = "${args[1]}" ] && {
-				
-					usage; usage_long; exit $?;
-			
-			} || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && {
-				
-					srcinfo; exit $?;
-			
-			} || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
-				
-					:; exit $?;
-		    
-			} || usage; usage_error; exit $?
+		}
+   }
+		
+ [ "$1" = "${args[0]}" ] && { usage; usage_short; exit $?; } \
+ || [ "$1" = "${args[1]}" ] && { usage; usage_long; exit $?; } \
+ || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && { srcinfo; exit $?; } \
+ || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && { :; exit $?; } \
+ || usage; usage_error; exit $?
 
 
