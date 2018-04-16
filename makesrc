@@ -24,7 +24,7 @@ usage()
 				echo -e "  ${args[4]},${args[5]}\trun $(basename $0) interactively"
 				echo
 		};usage_error(){ 
-				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]"; 
+				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]" 
 		}
 }
 
@@ -97,49 +97,58 @@ makesrc() # make a source-build
 		srcbuild
 }
 
-if [ "$#" -eq 0 ];
-then
-		usage; usage_error 1
+[ "$#" -eq 0 ] &&
+		{
+				usage; usage_error 1;
+		}
 
-elif [ "$#" -gt 0 ];
-then
-		if [ "$1" == "${args[0]}" ];
-		then
-				if [ -z "$2" ];
-				then
-						usage; usage_short
-				fi
-		elif [ "$1" == "${args[1]}" ];
-		then
-				if [ -z "$2" ];
-				then
-						usage; usage_long
-				fi
-		elif [ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ];
-		then
-				if [ -n "$2" ] && [ "$2" == "${args[6]}" ];
-				then
-						srcinfo
-				fi
-		elif [ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ];
-		then
-				::
-		elif [ "$1" == "${args[6]}" ];
-		then
-				if [ -z "$2" ];
-				then
-						makesrc
-				fi
-		elif [ "$2" == "${args[6]}" ];
-		then
-				if [ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ];
-				then
-						srcinfo
-				fi
-		else
-				usage; usage_error 1
-		fi
-fi
-exit $?
+[ "$#" -gt 0 ] &&
+		{
+				[ "$1" == "${args[0]}" ] &&
+						{
+								[ -z "$2" ] &&
+										{
+												usage; usage_short; exit 0;
+										}
+								}
+				[ "$1" == "${args[1]}" ] &&
+						{
+								[ -z "$2" ]
+										{
+												usage; usage_long; exit 0;
+										}
+						}
+				[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
+						{
+								[ -n "$2" ] && [ "$2" == "${args[6]}" ] &&
+										{
+												srcinfo; exit $?;
+										}
+								}
+				[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
+						{
+								:
+						}
+				[ "$1" == "${args[6]}" ] &&
+						{
+								[ -z "$2" ] &&
+										{
+												makesrc; exit $?;
+										}
+								}
+				[ -n "$2" ] &&
+						{
+								[ "$2" == "${args[6]}" ] &&
+										{
+												[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
+														{
+																srcinfo; exit $?;
+														}
+												}
+								}
+				} || \
+						{ 
+								usage; usage_error; exit 1; 
+						}
 
 
