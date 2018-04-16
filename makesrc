@@ -104,38 +104,43 @@ makesrc() # make a source-build
 
 [ $# -gt 0 ] &&
 		{
-				case "$1" in
-						${args[0]})
-								if [ -z "$2" ];
-								then
-										usage; usage_short
-								fi
-								;;
-						${args[1]})
-								if [ -z "$2" ];	
-								then
-										usage; usage_long
-								fi
-								;;
-						${args[2]}|${args[3]})
-								if [ -n "$2" ] && [ "$2" == "${args[6]}" ];
-								then
-										srcinfo
-								fi
-								;;
-						${args[4]}|${args[5]})
+				[ "$1" == "${args[0]}" ] &&
+						{
+								[ -z "$2" ] &&
+										{
+												usage; usage_short;
+										}
+						}\
+				|| [ "$1" == "${args[1]}" ] &&
+						{
+								[ -z "$2" ] &&
+										{
+												usage; usage_long;
+										}
+						}\
+				|| [ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
+						{
+								[ -n "$2" ] && [ "$2" == "${args[6]}" ] &&
+										{
+												srcinfo;
+										}
+						}\
+				|| [ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
+						{
 								: 
-								;;
-						${args[6]})
-								if [ -z "$2" ];
-								then
-										makesrc
-								fi
-								;;
-						*)
-								usage; usage_error 1
-								;;
-				esac;
+						}\
+				|| [ "$1" == "${args[6]}" ] &&
+						{
+								[ -z "$2" ] &&
+										{
+												makesrc;
+										}
+						}\
+				|| \
+						usage; usage_error 1
+
+		}
+
 				case "$2" in
 						${args[6]})
 								if [ "$1" == "${args[2]}"] || [ "$1" == "${args[3]}" ];
@@ -144,7 +149,6 @@ makesrc() # make a source-build
 								fi
 								;;
 				esac;
-		}
 
 exit $?
 
