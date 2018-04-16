@@ -26,6 +26,8 @@ srcbuild(){
 		SOURCE_DIR=${BUILD_DIR}/src
 		#MAKEFLAGS=('-j 8')
 
+		args=('--cc')
+
 		export BUILD_DEV BUILD_DIR BUILD_TGT TBX_USR TBX_DIR SOURCE_DIR #MAKEFLAGS
 
 		make_disk(){
@@ -128,10 +130,15 @@ srcbuild(){
 		
 				:
 
-		}; if [ -z "$#" ];
-		then
+		}; [ "$#" -eq 0] && {
+				
 				make_disk; disk_prep; disk_part; disk_mkfs; disk_mnts
 				make_toolbox; toolbox_setup; toolbox_build
-		fi
+		
+		   } || [ "$#" -gt 0 ] && [ "$*" == "${args[0]}" ] && {
+				   
+				   cctoolbox
+   
+   				}
 
 }
