@@ -6,6 +6,7 @@ CCCTBX='gnu_linux_from_scratch'
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
+E_UID=		# error - not root 
 E_SB=1		# error - SRCBUILD
 E_SGF=		# error - source get failed
 E_SVF=		# error - source verification failed
@@ -124,8 +125,12 @@ makesrc() # make a source-build from a SRCBUILD
 		}
 		
 		srcsrcbuild
+		if [ $EUID -ne 0 ];
+		then
+				exit $E_UID
+		fi
 
-		if [ "$srcname" == "$CCCTBX" ];
+		if [ "$srcname" == "$CCCTBX" ];		# CC_TOOLCHAIN
 		then
 				BUILD_DEV=
 				BUILD_DIR=

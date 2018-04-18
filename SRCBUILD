@@ -16,11 +16,11 @@ provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libst
 		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
 #conflicts=('')
 
-srcbuild(){
-		
+srcbuild()
+{		
 		BUILD_DEV=/dev/sdb
-		BUILD_DIR=/mnt/ninja
-		BUILD_TGT="$(uname -m)-tbx-linux-gnu"
+		BUILD_DIR=/mnt/lfs
+		BUILD_TGT="$(uname -m)-cc-linux-gnu"
 		TBX_USER='tbx'
 		TBX_DIR=${BUILD_DIR}/${TBX_USER}
 		SOURCE_DIR=${BUILD_DIR}/src
