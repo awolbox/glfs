@@ -81,7 +81,8 @@ srcbuild(){
                 
 		};prep_source(){
 
-						:
+						mkdir -v $SOURCE_DIR
+						cp -rv src/* $BUILD_DIR
 
 		};make_toolbox(){ 
 

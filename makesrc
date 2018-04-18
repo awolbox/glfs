@@ -9,21 +9,18 @@ usage()
 		{
 				for x in ${args[@]}
 						do
-								echo -n "[ $x ] "
+								echo -n "[$x] "
 						done
-		}
-		usage_short()
-		{
-				echo -e "Usage: $(basename $0) $(largs)... [ SRCBUILD ]"
 		}
 		usage_long()
 		{
-				usage_short
+				echo -e "Usage: $(basename $0) [OPTIONS]... [SRCBUILD]"
+				echo -e "\nbuild source from SRCBUILD"
 				echo -e "\nOptions:\n"
-				echo -e "  ${args[0]},${args[1]}\t\tshow this help screen"
-				echo -e "  ${args[2]},${args[3]}\t\tdisplays various information about SRCBUILD"
-				echo -e "  ${args[4]},${args[5]}\trun $(basename $0) interactively"
-				echo
+				echo -e "  ${args[0]}, ${args[1]}\t\tshow this help screen"
+				echo -e "  ${args[2]}, ${args[3]}\t\tdisplays various information about SRCBUILD"
+				echo -e "  ${args[4]}, ${args[5]}\trun $(basename $0) interactively"
+				echo -e "\nAuthor: awolbox <awol@member.fsf.org>"
 		}
 		usage_error()
 		{ 
@@ -58,7 +55,7 @@ srcinfo() # parse & echo various different $vars to STDOUT
 
 srcdepends() # list/get dependencies for source
 { 		
-		depnum=$(echo "${depends[*]}" | wc -w)
+		depends_count=$(echo "${depends[*]}" | wc -w)
 	
 		resolve_depends()
 		{
@@ -66,22 +63,23 @@ srcdepends() # list/get dependencies for source
 				do
 					if [ -d $SOURCE_DIR/$x ];
 					then
-						cd $SOURCE_DIR/$x
-						makesrc
+							(cd $SOURCE_DIR/$x; makesrc)
+					else
+							exit 1
 					fi
 				done
 		}
 
 		if [ "$1" == "${args[4]}" ] || [ "$1" == ${args[5]} ];
 		then
-				echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
+				echo -e "\n\t\e[1;31mDependencies\e[0m($depends_count)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
 				echo -e -n "\t\e[1;31mInstall?:\e[0m "
-				read indep
+				read u
 
-				if [ "$indep" == "y" ] || [ "$indep" == "Y" ] || [ $indep == "yes" ] || [ $indep == "Yes" ] || [ $indep == "YES" ];
+				if [ "$u" == "y" ] || [ "$u" == "Y" ] || [ "$u" == "yes" ] || [ "$u" == "Yes" ] || [ "$u" == "YES" ];
 				then
 						$resolve_depends
-				elif [ "$indep" == "n" ] || [ "$indep" == "N" ] || [ $indep == "no" ] || [ $indep == "No" ] || [ $indep == "NO" ];
+				elif [ "$u" == "n" ] || [ "$u" == "N" ] || [ "$u" == "no" ] || [ "$u" == "No" ] || [ "$u" == "NO" ];
 				then
 						exit 1
 				fi
@@ -90,20 +88,41 @@ srcdepends() # list/get dependencies for source
 		fi
 }
 
-srcrepos() # source repository $vars
+srcrepos() # source repository $vars (much more work needs done for this (don't know if i want it))
 {
-		gnu_repo='https://ftp.gnu.org/gnu'
-		savannah_repo=''	
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
 }
 
 makesrc() # make a source-build
 {
+		
+		srcextr() # extract source tarball (more support for other filetypes later)
+		{
+			v=$(ls . | grep ".tar" | grep -v ".sig")
+			w=$(echo "$(${v})" | cut -d "." -f 4)
+			if [ "$w" == "xz" ] || [ "$w" == "gz" ];
+			then
+					tar xzvf $(${v})
+			elif [ "$w" == "bz2" ];
+			then
+					tar xzvf $(${v})
+			else
+					echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
+							FILE TYPE: $(${w})\n"
+					exit 1
+			fi
+		}
+		
 		srcsrcbuild
+		
 		if [ -n "${depends[*]}" ];
 		then
 				srcdepends
 		elif [ -e $SOURCE_DIR/$srcname/$(ls . | grep ".tar" | grep -v ".sig") ];
 		then
+				srcextr
 				$srcbuild
 		else
 				if [ -z $SOURCE_DIR/gnu-keyring.gpg ];
@@ -120,6 +139,7 @@ makesrc() # make a source-build
 						}
 						if [ `verify_sig` == "Good" ];
 						then
+								srcextr
 								$srcbuild									
 						else
 								exit 1
@@ -136,13 +156,12 @@ makesrc() # make a source-build
 [ "$#" -gt 0 ] &&
 {
 
-		[ "$1" == "${args[0]}" ] && [ -z "$2" ] &&
-		{
-				usage; usage_short; exit 0;
-		}
-		[ "$1" == "${args[1]}" ] && [ -z "$2" ] &&
-		{
-				usage; usage_long; exit 0;
+		[ "$1" == "${args[0]}" ] || [ "$1" == "${args[1]}" ] && 
+		{		
+				[ -z "$2" ] &&
+				{
+						usage; usage_long; exit 0;
+				}
 		}
 		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
 		{
@@ -156,7 +175,10 @@ makesrc() # make a source-build
 		}
 		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
 		{
-				:
+				[ "2" == "SRCBUILD" ] &&
+				{
+						makesrc; exit $?;
+				}
 		}
 		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
 		{
