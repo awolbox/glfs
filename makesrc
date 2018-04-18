@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 
 SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
+CCCTBX='gnu_linux_from_scratch'
+#MAKEFLAGS=('-j $f')
+
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
+
+E_SB=1		# error - SRCBUILD
+E_SGF=		# error - source get failed
+E_SVF=		# error - source verification failed
+E_MSF=		# error - makesrc failed
 
 usage()
 {
@@ -24,7 +32,7 @@ usage()
 		}
 		usage_error()
 		{ 
-				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]" 
+				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [SRCBUILD]" 
 		}
 }
 
@@ -95,7 +103,7 @@ srcrepos() # source repository $vars (much more work needs done for this (don't 
 		#savannah_repo=''	
 }
 
-makesrc() # make a source-build
+makesrc() # make a source-build from a SRCBUILD
 {
 		
 		srcextr() # extract source tarball (more support for other filetypes later)
@@ -116,7 +124,17 @@ makesrc() # make a source-build
 		}
 		
 		srcsrcbuild
-		
+
+		if [ "$srcname" == "$CCCTBX" ];
+		then
+				BUILD_DEV=
+				BUILD_DIR=
+				BUILD_TGT=
+				TBX_USER=
+				TBX_DIR=
+				SOURCE_DIR=
+		fi
+
 		if [ -n "${depends[*]}" ];
 		then
 				srcdepends
