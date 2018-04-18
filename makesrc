@@ -1,29 +1,32 @@
 #!/usr/bin/env bash
 
 SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
-SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
-
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
-
-E_SBE=1			# error - SRCBUILD error
 
 usage()
 {
-		largs(){
+		largs()
+		{
 				for x in ${args[@]}
 						do
 								echo -n "[ $x ] "
 						done
-		};usage_short(){
+		}
+		usage_short()
+		{
 				echo -e "Usage: $(basename $0) $(largs)... [ SRCBUILD ]"
-		};usage_long(){
+		}
+		usage_long()
+		{
 				usage_short
 				echo -e "\nOptions:\n"
 				echo -e "  ${args[0]},${args[1]}\t\tshow this help screen"
 				echo -e "  ${args[2]},${args[3]}\t\tdisplays various information about SRCBUILD"
 				echo -e "  ${args[4]},${args[5]}\trun $(basename $0) interactively"
 				echo
-		};usage_error(){ 
+		}
+		usage_error()
+		{ 
 				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]" 
 		}
 }
@@ -99,16 +102,29 @@ makesrc() # make a source-build
 		if [ -n "${depends[*]}" ];
 		then
 				srcdepends
-		elif [ -z $SOURCE_DIR ];
+		elif [ -e $SOURCE_DIR/$srcname/$(ls . | grep ".tar" | grep -v ".sig") ];
 		then
-				if [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
+				$srcbuild
+		else
+				if [ -z $SOURCE_DIR/gnu-keyring.gpg ];
+				then
+						wget https://ftp.gnu.org/gnu/gnu-keyring.gpg --directory-prefix=$SOURCE_DIR
+				elif [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
 				then
 						wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
 						wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
-						gpg --no-default-key --keyring=$SOURCE_KEYRING ${srcname}.sig
+						verify_sig()
+						{
+								gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
+										.VERIFY && cat .VERIFY | grep "GOOD"
+						}
+						if [ `verify_sig` == "Good" ];
+						then
+								$srcbuild									
+						else
+								exit 1
+						fi
 				fi
-		else
-				srcbuild
 		fi
 }
 
@@ -142,10 +158,12 @@ makesrc() # make a source-build
 		{
 				:
 		}
-		[ "$1" == "${args[6]}" ] && [ -z "$2" ] &&
+		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
 		{
 				makesrc; exit $?;
 		} || \
-				{ usage; usage_error; exit 1; }
+				{
+						usage; usage_error; exit 1;
+				}
 }; exit $?
 
