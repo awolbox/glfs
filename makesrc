@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 
-<<<<<<< HEAD
-SRCBUILDX=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?)
-SRCBUILD=$([ -f ])
-SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
-SRCKEYRING=$SOURCE_DIR/srcman.kys
-=======
 SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
 CCCTBX='gnu_linux_from_scratch'
 #MAKEFLAGS=('-j $f')
->>>>>>> master
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
@@ -18,16 +11,10 @@ E_SGF=		# error - source get failed
 E_SVF=		# error - source verification failed
 E_MSF=		# error - makesrc failed
 
-<<<<<<< HEAD
-usage(){ 
-		
-		largs(){
-=======
 usage()
 {
 		largs()
 		{
->>>>>>> master
 				for x in ${args[@]}
 						do
 								echo -n "[$x] "
@@ -177,26 +164,8 @@ makesrc() # make a source-build from a SRCBUILD
 						fi
 				fi
 		fi
-<<<<<<< HEAD
 		
 		srcbuild
-
-}; [ "$*" = "SRCBUILD" ] && {
-		
-		[ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && {
-				
-				:; 
-			
-		}
-   }
-		
- [ "$1" = "${args[0]}" ] && { usage; usage_short; exit $?; } \
- || [ "$1" = "${args[1]}" ] && { usage; usage_long; exit $?; } \
- || [ "$1" = "${args[2]}" ] || [ "$1" = "${args[3]}" ] && { srcinfo; exit $?; } \
- || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && { :; exit $?; } \
- || usage; usage_error; exit $?
-
-=======
 }
 
 [ "$#" -eq 0 ] &&
@@ -239,5 +208,4 @@ makesrc() # make a source-build from a SRCBUILD
 						usage; usage_error; exit 1;
 				}
 }; exit $?
->>>>>>> master
 
