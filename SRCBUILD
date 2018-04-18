@@ -30,16 +30,18 @@ srcbuild(){
 
 		export BUILD_DEV BUILD_DIR BUILD_TGT TBX_USR TBX_DIR SOURCE_DIR #MAKEFLAGS
 
-		make_disk(){
+		make_disk() # prep/format/mount disk
+		{
 				
-				disk_prep(){ # securely wipe disk
-		
+				disk_prep() # securely wipe disk
+				{
 						#shred -n 3 -z -v $BUILD_DEV
 						dd if=/dev/urandom of=$BUILD_DEV bs=4096 status=progress &&
 								dd if=/dev/zero of/$BUILD_DEV bs=4096 status=progress
-
-				};disk_part(){ # partition disk
-
+				}
+				
+				disk_part() # partition disk
+				{
 						parted $BUILD_DEV mklabel gpt
 		        		parted $BUILD_DEV mkpart linux 0% 2M
 		        		parted $BUILD_DEV set 1 bios_grub on
@@ -52,9 +54,10 @@ srcbuild(){
 				        parted $BUILD_DEV mkpart linux ext4 70GB 75GB               # /var
 				        parted $BUILD_DEV mkpart linux ext4 75GB 130GB              # /usr/src
 				        parted $	BUILD_DEV mkpart linux ext4 130GB 100%              # /home
-
-				};disk_mkfs(){ # make filesystems on disk
-                        
+				}
+				
+				disk_mkfs() # make filesystems on disk
+				{
   			      		mkfs.fat -F32 ${BUILD_DEV}2
 				        mkfs.ext4 ${BUILD_DEV}4
 				        mkfs.ext4 ${BUILD_DEV}5
@@ -64,9 +67,10 @@ srcbuild(){
 				        mkfs.ext4 ${BUILD_DEV}9
 				        mkfs.ext4 ${BUILD_DEV}10
 				        mkswap ${BUILD_DEV}3
-
-				};disk_mnts(){ # mount disk to host
-                        
+				}
+				
+				disk_mnts() # mount disk to host
+				{
 		        		mkdir $DIR
 				        mount -v ${BUILD_DEV}4 $DIR
 				        mkdir -pv ${BUILD_DIR}/{boot,usr,opt,etc,var,home} 
@@ -80,16 +84,20 @@ srcbuild(){
 				        mount -v ${BUILD_DEV}10 $BUILD_DIR/home
 						swapon ${BUILD_DEV}3
 				}
-                
-		};prep_source(){
+		}
+		
+		prep_source() # get build dependencies
+		{
 
 						mkdir -v $SOURCE_DIR
 						cp -rv src/* $BUILD_DIR
-
-		};make_toolbox(){ 
-
-				toolbox_setup(){ # make/set toolbox user/environment/sources
+		}
 		
+		make_toolbox() # cross-compile toolbox
+		{ 
+
+				toolbox_setup() # make/set toolbox user/environment/sources
+				{
 						# TBX User
 						mkdir -v $BUILD_DIR/$TBX_USR
 						groupadd $TBX_USR
@@ -120,15 +128,17 @@ srcbuild(){
 						ln -sv $TBX_DIR /
 						cp -v ./* /home/$TBX_USR
 						chown -R ${TBX_USR}:${TBX_USR} /home/$TBX_USR
-
-				};toolbox_build(){ # build toolbox
-		
+				}
+				
+				toolbox_build() # build toolbox
+				{
 						su $TBX_USR -c "source /home/$TBX_USR/.bashrc && source /home/$TBX_USR/SRCBUILD && cctoolbox"
 		
 				}
-
-		};cctoolbox(){ # toolbox cross-compilation process
+		}
 		
+		cctoolbox() # toolbox cross-compilation process
+		{
 				a=( $(ls $SRCDIR) )
 				for b in ${a[@]}
 				do
@@ -137,8 +147,9 @@ srcbuild(){
 							cd $b makesrc SRCBUILD
 					fi
 				done
-
-		}; if [ "$#" -eq 0 ];
+		}
+		
+		if [ "$#" -eq 0 ];
 		then
 				make_disk; disk_prep; disk_part; disk_mkfs; disk_mnts
 				make_toolbox; toolbox_setup; toolbox_build

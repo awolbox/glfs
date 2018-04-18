@@ -164,8 +164,6 @@ makesrc() # make a source-build from a SRCBUILD
 						fi
 				fi
 		fi
-		
-		srcbuild
 }
 
 [ "$#" -eq 0 ] &&
