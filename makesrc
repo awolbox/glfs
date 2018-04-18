@@ -1,89 +1,183 @@
 #!/usr/bin/env bash
 
+<<<<<<< HEAD
 SRCBUILDX=$(ls . | grep --regex="SRCBUILD" -x -w 2&> /dev/null; echo $?)
 SRCBUILD=$([ -f ])
 SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
 SRCKEYRING=$SOURCE_DIR/srcman.kys
+=======
+SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
+CCCTBX='gnu_linux_from_scratch'
+#MAKEFLAGS=('-j $f')
+>>>>>>> master
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
-E_SBE=1			# error - SRCBUILD error
+E_SB=1		# error - SRCBUILD
+E_SGF=		# error - source get failed
+E_SVF=		# error - source verification failed
+E_MSF=		# error - makesrc failed
 
+<<<<<<< HEAD
 usage(){ 
 		
 		largs(){
+=======
+usage()
+{
+		largs()
+		{
+>>>>>>> master
 				for x in ${args[@]}
 						do
-								echo -n "[ $x ] "
+								echo -n "[$x] "
 						done
-		};usage_short(){
-				echo -e "Usage: $(basename $0) $(largs)... [ SRCBUILD ]"
-		};usage_long(){
-				usage_short
-				echo -e "\nOptions:\n"
-				echo -e "  ${args[0]},${args[1]}\t\tshow this help screen"
-				echo -e "  ${args[2]},${args[3]}\t\tdisplays various information about SRCBUILD"
-				echo -e "  ${args[4]},${args[5]}\trun $(basename $0) interactively"
-				echo
-		};usage_error(){ 
-				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [ SRCBUILD ]"; 
 		}
+		usage_long()
+		{
+				echo -e "Usage: $(basename $0) [OPTIONS]... [SRCBUILD]"
+				echo -e "\nbuild source from SRCBUILD"
+				echo -e "\nOptions:\n"
+				echo -e "  ${args[0]}, ${args[1]}\t\tshow this help screen"
+				echo -e "  ${args[2]}, ${args[3]}\t\tdisplays various information about SRCBUILD"
+				echo -e "  ${args[4]}, ${args[5]}\trun $(basename $0) interactively"
+				echo -e "\nAuthor: awolbox <awol@member.fsf.org>"
+		}
+		usage_error()
+		{ 
+				echo -e "$(basename $0): invalid command\nUsage: $(largs)... [SRCBUILD]" 
+		}
+}
 
-};srcsrbuild(){ # source SRCBUILD
-
-		if [ "$SRCBUILD" -eq 0 ] && [ -O $SRCBUILD ] && [ -r $SRCBUILD ] && [ -G $SRCBUILD ] [ -n $SRCBUILD ];
+srcsrcbuild() # source SRCBUILD
+{
+		if [ -f ./SRCBUILD ] && [ -O ./SRCBUILD ] && [ -r ./SRCBUILD ] && [ -G ./SRCBUILD ] && [ -n ./SRCBUILD ];
 		then
-				source $SRCBUILD
+				source ./SRCBUILD
 		else
-				exit $E_SBE
+				exit $E_SBE 
 		fi
+}
 
-};srcinfo(){ # parse & echo various different $vars to STDOUT
-
-		info_print(){
+srcinfo() # parse & echo various different $vars to STDOUT
+{
+		info_print()
+		{
 				echo -e "\e[0;31mSOURCE\e[0m\n"
 				echo -e "\t$srcname - ($srcver)\n"
 				echo -e "\e[0;31mINFO\e[0m\n"
 				echo -e "  $info\n"
 				echo -e "\e[0;31mPROJECT HOME\e[0m\n"
-				echo -e "  ($srcurl)\n"	
+				echo -e "  $srcurl\n"	
 				echo -e "\e[0;31mLICENSE\e[0m\n"
-				echo -e "  \e[1;31mThis project is licenced under the following: \e[0m\t${srccpy[*]}\n"
-		};srcsrcbuild; info_print
+				echo -e "  \e[1;31mThis project is licenced under the following:\e[0m ${srccpy[*]}\n"
+		};srcsrcbuild; info_print;
+}
 
-};srcdepends() { 
-		
-		depnum=$(echo "${depends[*]}" | wc -w)
-		echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
-		echo -e -n "\t\e[1;31mInstall?:\e[0m "
-		read indep
-
-		if [ "$indep" == "y" ] || [ "$indep" == "Y" ] || [ $indep == "yes" ] || [ $indep == "Yes" ] || [ $indep == "YES" ];
-		then
-				for dep in ${depends[*]}	
-	    		do
-	    			:# install depends
+srcdepends() # list/get dependencies for source
+{ 		
+		depends_count=$(echo "${depends[*]}" | wc -w)
+	
+		resolve_depends()
+		{
+				for x in ${depends[@]}
+				do
+					if [ -d $SOURCE_DIR/$x ];
+					then
+							(cd $SOURCE_DIR/$x; makesrc)
+					else
+							exit 1
+					fi
 				done
-		elif [ "$indep" == "n" ] || [ "$indep" == "N" ] || [ $indep == "no" ] || [ $indep == "No" ] || [ $indep == "NO" ];
+		}
+
+		if [ "$1" == "${args[4]}" ] || [ "$1" == ${args[5]} ];
 		then
-				exit 1
+				echo -e "\n\t\e[1;31mDependencies\e[0m($depends_count)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
+				echo -e -n "\t\e[1;31mInstall?:\e[0m "
+				read u
+
+				if [ "$u" == "y" ] || [ "$u" == "Y" ] || [ "$u" == "yes" ] || [ "$u" == "Yes" ] || [ "$u" == "YES" ];
+				then
+						$resolve_depends
+				elif [ "$u" == "n" ] || [ "$u" == "N" ] || [ "$u" == "no" ] || [ "$u" == "No" ] || [ "$u" == "NO" ];
+				then
+						exit 1
+				fi
+		else
+				$resolve_depends
+		fi
+}
+
+srcrepos() # source repository $vars (much more work needs done for this (don't know if i want it))
+{
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
+}
+
+makesrc() # make a source-build from a SRCBUILD
+{
+		
+		srcextr() # extract source tarball (more support for other filetypes later)
+		{
+			v=$(ls . | grep ".tar" | grep -v ".sig")
+			w=$(echo "$(${v})" | cut -d "." -f 4)
+			if [ "$w" == "xz" ] || [ "$w" == "gz" ];
+			then
+					tar xzvf $(${v})
+			elif [ "$w" == "bz2" ];
+			then
+					tar xzvf $(${v})
+			else
+					echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
+							FILE TYPE: $(${w})\n"
+					exit 1
+			fi
+		}
+		
+		srcsrcbuild
+
+		if [ "$srcname" == "$CCCTBX" ];
+		then
+				BUILD_DEV=
+				BUILD_DIR=
+				BUILD_TGT=
+				TBX_USER=
+				TBX_DIR=
+				SOURCE_DIR=
 		fi
 
-};srcrepos(){
-
-		gnu_repo='https://ftp.gnu.org/gnu'
-		savannah_repo=''
-	
-};makesrc(){
-
-		srcsrcbuild
 		if [ -n "${depends[*]}" ];
 		then
 				srcdepends
-		elif [ -z $SRCARC ];
+		elif [ -e $SOURCE_DIR/$srcname/$(ls . | grep ".tar" | grep -v ".sig") ];
 		then
-				:
+				srcextr
+				$srcbuild
+		else
+				if [ -z $SOURCE_DIR/gnu-keyring.gpg ];
+				then
+						wget https://ftp.gnu.org/gnu/gnu-keyring.gpg --directory-prefix=$SOURCE_DIR
+				elif [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
+				then
+						wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+						wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+						verify_sig()
+						{
+								gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
+										.VERIFY && cat .VERIFY | grep "GOOD"
+						}
+						if [ `verify_sig` == "Good" ];
+						then
+								srcextr
+								$srcbuild									
+						else
+								exit 1
+						fi
+				fi
 		fi
+<<<<<<< HEAD
 		
 		srcbuild
 
@@ -102,4 +196,48 @@ usage(){
  || [ "$1" = "${args[4]}" ] || [ "$1" = "${args[5]}" ] && { :; exit $?; } \
  || usage; usage_error; exit $?
 
+=======
+}
+
+[ "$#" -eq 0 ] &&
+{		
+		usage; usage_error 1;
+}
+
+[ "$#" -gt 0 ] &&
+{
+
+		[ "$1" == "${args[0]}" ] || [ "$1" == "${args[1]}" ] && 
+		{		
+				[ -z "$2" ] &&
+				{
+						usage; usage_long; exit 0;
+				}
+		}
+		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
+		{
+				[ "$2" == "SRCBUILD" ] &&
+				{
+						srcinfo; exit $?;
+				} || \
+				{
+						usage; usage_error; exit 1;
+				}
+		}
+		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
+		{
+				[ "2" == "SRCBUILD" ] &&
+				{
+						makesrc; exit $?;
+				}
+		}
+		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
+		{
+				makesrc; exit $?;
+		} || \
+				{
+						usage; usage_error; exit 1;
+				}
+}; exit $?
+>>>>>>> master
 
