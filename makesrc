@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
+SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
 SRCARC=$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname" 2&> /dev/null; echo $?)
-SRCKEYRING=$SOURCE_DIR/srcman.kys
 
-args=('-h' '--help' '-q' '--query' '-i' '--interactive' )
+args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
 E_SBE=1			# error - SRCBUILD error
 
@@ -34,7 +34,7 @@ srcsrcbuild() # source SRCBUILD
 		then
 				source ./SRCBUILD
 		else
-				exit $E_SBE
+				exit $E_SBE 
 		fi
 }
 
@@ -56,19 +56,34 @@ srcinfo() # parse & echo various different $vars to STDOUT
 srcdepends() # list/get dependencies for source
 { 		
 		depnum=$(echo "${depends[*]}" | wc -w)
-		echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
-		echo -e -n "\t\e[1;31mInstall?:\e[0m "
-		read indep
-
-		if [ "$indep" == "y" ] || [ "$indep" == "Y" ] || [ $indep == "yes" ] || [ $indep == "Yes" ] || [ $indep == "YES" ];
-		then
-				for dep in ${depends[*]}	
-	    		do
-	    			:# install depends
+	
+		resolve_depends()
+		{
+				for x in ${depends[@]}
+				do
+					if [ -d $SOURCE_DIR/$x ];
+					then
+						cd $SOURCE_DIR/$x
+						makesrc
+					fi
 				done
-		elif [ "$indep" == "n" ] || [ "$indep" == "N" ] || [ $indep == "no" ] || [ $indep == "No" ] || [ $indep == "NO" ];
+		}
+
+		if [ "$1" == "${args[4]}" ] || [ "$1" == ${args[5]} ];
 		then
-				exit 1
+				echo -e "\n\t\e[1;31mDependencies\e[0m($depnum)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
+				echo -e -n "\t\e[1;31mInstall?:\e[0m "
+				read indep
+
+				if [ "$indep" == "y" ] || [ "$indep" == "Y" ] || [ $indep == "yes" ] || [ $indep == "Yes" ] || [ $indep == "YES" ];
+				then
+						$resolve_depends
+				elif [ "$indep" == "n" ] || [ "$indep" == "N" ] || [ $indep == "no" ] || [ $indep == "No" ] || [ $indep == "NO" ];
+				then
+						exit 1
+				fi
+		else
+				$resolve_depends
 		fi
 }
 
@@ -84,53 +99,53 @@ makesrc() # make a source-build
 		if [ -n "${depends[*]}" ];
 		then
 				srcdepends
-		elif [ -z $SRCARC ];
+		elif [ -z $SOURCE_DIR ];
 		then
-				:
+				if [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
+				then
+						wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+						wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+						gpg --no-default-key --keyring=$SOURCE_KEYRING ${srcname}.sig
+				fi
+		else
+				srcbuild
 		fi
-		srcbuild
 }
 
 [ "$#" -eq 0 ] &&
 {		
 		usage; usage_error 1;
 }
+
 [ "$#" -gt 0 ] &&
 {
-		[ "$1" == "${args[0]}" ] &&
+
+		[ "$1" == "${args[0]}" ] && [ -z "$2" ] &&
 		{
-				[ -z "$2" ] &&
-				{
-						usage; usage_short; exit 0;
-				}
+				usage; usage_short; exit 0;
 		}
-		[ "$1" == "${args[1]}" ] &&
+		[ "$1" == "${args[1]}" ] && [ -z "$2" ] &&
 		{
-				[ -z "$2" ]
-				{
-						usage; usage_long; exit 0;
-				}
+				usage; usage_long; exit 0;
 		}
-		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] && 
-		{		
+		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
+		{
 				[ "$2" == "SRCBUILD" ] &&
 				{
 						srcinfo; exit $?;
+				} || \
+				{
+						usage; usage_error; exit 1;
 				}
 		}
 		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
 		{
 				:
 		}
-		[ "$1" == "${args[6]}" ] &&
+		[ "$1" == "${args[6]}" ] && [ -z "$2" ] &&
 		{
-				[ -z "$2" ] &&
-				{
-						makesrc; exit $?;
-				}
+				makesrc; exit $?;
 		} || \
-				{ 
-						usage; usage_error; exit 1; 
-				}
-};exit $?
+				{ usage; usage_error; exit 1; }
+}; exit $?
 
