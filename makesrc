@@ -7,6 +7,7 @@ CCCTBX='gnu_linux_from_scratch'
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
 # exit codes 
+EX_OK=0				# completed without error
 EX_USAGE=64			# error - general command line usage error 
 EX_NOPERM=70		# error - improper permissions - (root permissions needed)
 EX_UNAVAILABLE=69	# error - improper input - (SRCBUILD not found)
@@ -45,7 +46,7 @@ srcsrcbuild() # source SRCBUILD
 		then
 				source ./SRCBUILD
 		else
-				exit $E_SBE 
+				exit $EX_UNAVAILABLE
 		fi
 }
 
@@ -76,7 +77,7 @@ srcdepends() # list/get dependencies for source
 					then
 							(cd $SOURCE_DIR/$x; makesrc)
 					else
-							exit 1
+							exit $EX_UNAVAILABLE
 					fi
 				done
 		}
@@ -92,7 +93,7 @@ srcdepends() # list/get dependencies for source
 						$resolve_depends
 				elif [ "$u" == "n" ] || [ "$u" == "N" ] || [ "$u" == "no" ] || [ "$u" == "No" ] || [ "$u" == "NO" ];
 				then
-						exit 1
+						exit $EX_USAGE
 				fi
 		else
 				$resolve_depends
@@ -122,14 +123,14 @@ makesrc() # make a source-build from a SRCBUILD
 			else
 					echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
 							FILE TYPE: $(${w})\n"
-					exit 1
+					exit $EX_UNAVAILABLE
 			fi
 		}
 		
 		srcsrcbuild
 		if [ $EUID -ne 0 ];
 		then
-				exit $E_UID
+				exit $EX_NOPERM
 		fi
 
 		if [ "$srcname" == "$CCCTBX" ];		# CC_TOOLCHAIN
@@ -167,7 +168,7 @@ makesrc() # make a source-build from a SRCBUILD
 								srcextr
 								$srcbuild									
 						else
-								exit 1
+								exit $EX_DATAERR
 						fi
 				fi
 		fi
@@ -175,7 +176,7 @@ makesrc() # make a source-build from a SRCBUILD
 
 [ "$#" -eq 0 ] &&
 {		
-		usage; usage_error 1;
+		usage; usage_error; exit $EX_USAGE;
 }
 
 [ "$#" -gt 0 ] &&
@@ -185,7 +186,7 @@ makesrc() # make a source-build from a SRCBUILD
 		{		
 				[ -z "$2" ] &&
 				{
-						usage; usage_long; exit 0;
+						usage; usage_long; exit $EX_OK;
 				}
 		}
 		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
@@ -195,7 +196,7 @@ makesrc() # make a source-build from a SRCBUILD
 						srcinfo; exit $?;
 				} || \
 				{
-						usage; usage_error; exit 1;
+						usage; usage_error; exit $EX_USAGE;
 				}
 		}
 		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
@@ -210,7 +211,10 @@ makesrc() # make a source-build from a SRCBUILD
 				makesrc; exit $?;
 		} || \
 				{
-						usage; usage_error; exit 1;
+						usage; usage_error; exit $EX_USAGE;
 				}
 }; exit $?
+
+# config options
+#[ -f $BUILD_DIR/$MAKESRC_USER/.makesrc/config ]
 
