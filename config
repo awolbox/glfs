@@ -7,6 +7,15 @@
 #source_get=curl
 
 # makeflags
-#8
+#makeflags=('-j 8')
+
+# cc toolchain
+#toolchain_dir=
+#toolchain_user=
+#build_dev=
+#build_target=
+
+# source
+#source_dir=
 
 
