@@ -3,3 +3,4 @@ src/
 *tst.sh
 *.cpy
 *.CPY
+*.CHANGELOG
