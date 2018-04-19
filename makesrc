@@ -215,6 +215,4 @@ makesrc() # make a source-build from a SRCBUILD
 				}
 }; exit $?
 
-# config options
-#[ -f $BUILD_DIR/$MAKESRC_USER/.makesrc/config ]
 
