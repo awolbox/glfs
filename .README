@@ -1,5 +1,16 @@
 #
-# a gnu/linux "from-scratch" build using makesrc and SRCBUILDS
+# gnu/linux "from-scratch" using makesrc and SRCBUILDS
 #
 
+makesrc:
+--------	
+	
+	* build source-code using a SRCBUILD
 
+SRCBUILD:
+---------
+
+	* a file containing special $vars that makesrc understands
+
+
+NOTES: (nothing fancy, unfinished, needs mutch more work)
