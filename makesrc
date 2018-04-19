@@ -215,21 +215,24 @@ makesrc() # make a source-build from a SRCBUILD
 				}
 }; exit $?
 
-# config options
+# TESTING config options
 #[ -f $HOME/.config/makesrc/config ]
 #[ -f ./config ] 
 
-# system cc_toolbox options
+# TESTING system cc_toolbox options
 
 cargs=('-s' '--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
 
 for y in "$@"
 do
-	for z in "${args[@]}"
+	for z in "${cargs[@]}"
 	do
 		if [ "$y" == "$z" ];
 		then
-				:
+				if [ "$#" -gt 1 ];
+				then
+						:	
+				fi
 		fi
 	done
 done

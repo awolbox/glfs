@@ -3,3 +3,5 @@ src/
 *tst.sh
 *.cpy
 *.CPY
+*LOGIC
+*.LOGIC
