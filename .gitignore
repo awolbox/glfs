@@ -1,11 +1,10 @@
+.gitignore
 src/
 !src/**/SRCBUILD
-*tst.sh
+tst.*
 *.cpy
 *.CPY
-<<<<<<< HEAD
 *.CHANGELOG
-=======
 *LOGIC
 *.LOGIC
 >>>>>>> testing
