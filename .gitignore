@@ -1,0 +1,7 @@
+src/
+!src/**/SRCBUILD
+*tst.sh
+*.cpy
+*.CPY
+*LOGIC
+*.LOGIC
