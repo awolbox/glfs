@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 srcname=gnu_linux_from_scratch
 srcver=1.0
@@ -8,15 +8,15 @@ srcurl="https://github.com/awolbox/glfs"
 srcget="${srcurl}.git"
 srccpy=('GPLv3')
 #srcsig("")
-depends_toolchain=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+ccdepends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		 			'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		 			'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
-provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+ccprovides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		  'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
-#conflicts=('')
+#ccconflicts=('')
 
-srcbuild()
+ccsrcbuild()
 {		
 		BUILD_DEV=/dev/sdb
 		BUILD_DIR=/mnt/lfs
@@ -53,7 +53,7 @@ srcbuild()
 				        parted $BUILD_DEV mkpart linux ext4 68GB 70GB               # /etc
 				        parted $BUILD_DEV mkpart linux ext4 70GB 75GB               # /var
 				        parted $BUILD_DEV mkpart linux ext4 75GB 130GB              # /usr/src
-				        parted $	BUILD_DEV mkpart linux ext4 130GB 100%              # /home
+				        parted $BUILD_DEV mkpart linux ext4 130GB 100%              # /home
 				}
 				
 				disk_mkfs() # make filesystems on disk

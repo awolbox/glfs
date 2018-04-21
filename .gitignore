@@ -3,4 +3,9 @@ src/
 *tst.sh
 *.cpy
 *.CPY
+<<<<<<< HEAD
 *.CHANGELOG
+=======
+*LOGIC
+*.LOGIC
+>>>>>>> testing

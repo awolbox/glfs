@@ -1,0 +1,21 @@
+# config file for makesrc
+
+# uncomment to use wget to get source
+#source_get=wget
+
+# uncomment to use curl to get source
+#source_get=curl
+
+# makeflags
+#makeflags=('-j 8')
+
+# cc toolchain
+#toolchain_dir=
+#toolchain_user=
+#build_dev=
+#build_target=
+
+# source
+#source_dir=
+
+

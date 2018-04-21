@@ -26,7 +26,7 @@ usage()
 		}
 		usage_long()
 		{
-				echo -e "Usage: $(basename $0) [OPTIONS]... [SRCBUILD]"
+				echo -e "Usage: $(basename $0) [OPTIONS]... [CCOPTIONS]... [SRCBUILD]"
 				echo -e "\nbuild source from SRCBUILD"
 				echo -e "\nOptions:\n"
 				echo -e "  ${args[0]}, ${args[1]}\t\tshow this help screen"
@@ -215,4 +215,31 @@ makesrc() # make a source-build from a SRCBUILD
 				}
 }; exit $?
 
+<<<<<<< HEAD
+=======
+config_file_options() # TESTING makesrc config file
+{
+	[ -f $HOME/.config/makesrc/config ]
+	[ -f ./config ]
+}
+
+cc_toolbox_optins() # TESTING system cc_toolbox options
+{
+	cargs=('-s' '--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
+	for y in "$@"
+	do
+		for z in "${cargs[@]}"
+		do
+			if [ "$y" == "$z" ];
+			then
+				if [ "$#" -gt 1 ];
+				then
+						:	
+				fi
+			fi
+		done
+	done
+}
+
+>>>>>>> testing
 
