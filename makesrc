@@ -2,7 +2,7 @@
 
 SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
 CCCTBX='gnu_linux_from_scratch'
-#MAKEFLAGS=('-j $f')
+#MAKEFLAGS=$MAKEFLAGS
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
@@ -109,7 +109,6 @@ srcrepos() # source repository $vars (much more work needs done for this (don't 
 
 makesrc() # make a source-build from a SRCBUILD
 {
-		
 		srcextr() # extract source tarball (more support for other filetypes later)
 		{
 			v=$(ls . | grep ".tar" | grep -v ".sig")
@@ -181,7 +180,6 @@ makesrc() # make a source-build from a SRCBUILD
 
 [ "$#" -gt 0 ] &&
 {
-
 		[ "$1" == "${args[0]}" ] || [ "$1" == "${args[1]}" ] && 
 		{		
 				[ -z "$2" ] &&
@@ -223,18 +221,42 @@ config_file_options() # TESTING makesrc config file
 
 cc_toolbox_optins() # TESTING system cc_toolbox options
 {
-	cargs=('-s' '--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
+	CARGS=('-s' '--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
 	for y in "$@"
 	do
-		for z in "${cargs[@]}"
+		for z in "${CARGS[@]}"
 		do
 			if [ "$y" == "$z" ];
 			then
 				if [ "$#" -gt 1 ];
 				then
-						:	
+						if [ "$z" == ${CARGS[0]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[1]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[2]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[3]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[4]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[5]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[6]} ];
+						then
+								:
+						elif [ "$z" == ${CARGS[7]} ];
+						then
+								:
+						fi
 				fi
-			fi
+		fi
 		done
 	done
 }
