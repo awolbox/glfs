@@ -9,11 +9,15 @@
 # makeflags
 #makeflags=('-j 8')
 
+
+## TESTING ##
+-------------
+
 # cc toolchain
-#toolchain_dir=
 #toolchain_user=
-#build_dev=
+#toolchain_dir=
 #build_target=
+#build_dev=
 
 # source
 #source_dir=

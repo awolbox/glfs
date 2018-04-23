@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 
+BUILD_DEV=$build_dev
+BUILD_DIR=$build_dir
+BUILD_TGT=$build_tgt
+TBX_USER=$toolbox_user
+TBX_DIR=$toolbox_dir
+SOURCE_GET=$source_get
+SOURCE_DIR=$source_dir
 SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
-CCCTBX='gnu_linux_from_scratch'
-#MAKEFLAGS=$MAKEFLAGS
+CCC_TBX='gnu_linux_from_scratch'
+#MAKEFLAGS=$makeflags
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 
@@ -126,21 +133,29 @@ makesrc() # make a source-build from a SRCBUILD
 			fi
 		}
 		
+		src_get() # TESTING - (unstable)
+		{
+			if [ "$source_get" == "wget" ];
+			then
+					wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+					wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+			elif [ "$source_get" == "curl" ];
+			then
+					:
+			fi
+		}
+		
 		srcsrcbuild
-		if [ $EUID -ne 0 ];
-		then
-				exit $EX_NOPERM
-		fi
+		
+		[ $EUID -ne 0 ] &&
+		{
+				exit $EX_NOPERM;
+		}
 
-		if [ "$srcname" == "$CCCTBX" ];		# CC_TOOLCHAIN
-		then
-				BUILD_DEV=
-				BUILD_DIR=
-				BUILD_TGT=
-				TBX_USER=
-				TBX_DIR=
-				SOURCE_DIR=
-		fi
+		[ "$srcname" == "$CCCTBX" ]; # CC_TOOLCHAIN
+		{
+				:# cross-compilation toolchain
+		}
 
 		if [ -n "${depends[*]}" ];
 		then
@@ -155,8 +170,7 @@ makesrc() # make a source-build from a SRCBUILD
 						wget https://ftp.gnu.org/gnu/gnu-keyring.gpg --directory-prefix=$SOURCE_DIR
 				elif [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
 				then
-						wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
-						wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+						src_get
 						verify_sig()
 						{
 								gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
@@ -201,11 +215,15 @@ makesrc() # make a source-build from a SRCBUILD
 		{
 				[ "2" == "SRCBUILD" ] &&
 				{
-						makesrc; exit $?;
+						makesrc; exit $?; # interactive ...
 				}
 		}
 		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
 		{
+				[ -f $CONFIG_OPTIONS ] &&
+				{
+						source $CONFIG_OPTIONS;
+				}
 				makesrc; exit $?;
 		} || \
 				{
@@ -215,8 +233,7 @@ makesrc() # make a source-build from a SRCBUILD
 
 config_file_options() # TESTING makesrc config file
 {
-	[ -f $HOME/.config/makesrc/config ]
-	[ -f ./config ]
+	[ -f $HOME/.config/makesrc/config ] || [ -f ./config ]
 }
 
 cc_toolbox_optins() # TESTING system cc_toolbox options
@@ -230,33 +247,18 @@ cc_toolbox_optins() # TESTING system cc_toolbox options
 			then
 				if [ "$#" -gt 1 ];
 				then
-						if [ "$z" == ${CARGS[0]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[1]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[2]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[3]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[4]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[5]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[6]} ];
-						then
-								:
-						elif [ "$z" == ${CARGS[7]} ];
-						then
-								:
-						fi
+						case "$z" in
+							${CARGS[0]}):;;
+							${CARGS[1]}):;;
+							${CARGS[2]}):;;
+							${CARGS[3]}):;;
+							${CARGS[4]}):;;
+							${CARGS[5]}):;;
+							${CARGS[6]}):;;
+							${CARGS[7]}):;;
+						esac
 				fi
-		fi
+			fi
 		done
 	done
 }
