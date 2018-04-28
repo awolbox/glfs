@@ -235,7 +235,7 @@ config_file_options() # TESTING makesrc config file
 
 cc_toolbox_optins() # TESTING system cc_toolbox options
 {
-	CARGS=('-s' '--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
+	CARGS=('--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
 	for y in "$@"
 	do
 		for z in "${CARGS[@]}"
@@ -252,7 +252,6 @@ cc_toolbox_optins() # TESTING system cc_toolbox options
 							${CARGS[4]}):;;
 							${CARGS[5]}):;;
 							${CARGS[6]}):;;
-							${CARGS[7]}):;;
 						esac
 				fi
 			fi
