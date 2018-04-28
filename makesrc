@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-BUILD_DEV=$build_dev
-BUILD_DIR=$build_dir
-BUILD_TGT=$build_tgt
-TBX_USER=$toolbox_user
-TBX_DIR=$toolbox_dir
-SOURCE_GET=$source_get
-SOURCE_DIR=$source_dir
-SOURCE_KEYRING=/home/$TBX_USR/.gnupg/sourceman.keys
-CCC_TBX='gnu_linux_from_scratch'
+TGTBUILD_DEV=$build_dev
+TGTBUILD_DIR=$build_dir
+TGTBUILD_TGT=$build_tgt
+CCTC_USR=$toolbox_user
+CCTC_DIR=$toolbox_dir
+SOURCEMAN_GET=$source_get
+SOURCEMAN_DIR=$source_dir
+SOURCEMAN_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
+CCTC_TBX=''
 #MAKEFLAGS=$makeflags
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
@@ -34,12 +34,12 @@ usage()
 		usage_long()
 		{
 				echo -e "Usage: $(basename $0) [OPTIONS]... [CCOPTIONS]... [SRCBUILD]"
-				echo -e "\nbuild source from SRCBUILD"
 				echo -e "\nOptions:\n"
 				echo -e "  ${args[0]}, ${args[1]}\t\tshow this help screen"
 				echo -e "  ${args[2]}, ${args[3]}\t\tdisplays various information about SRCBUILD"
 				echo -e "  ${args[4]}, ${args[5]}\trun $(basename $0) interactively"
-				echo -e "\nAuthor: awolbox <awol@member.fsf.org>"
+				echo -e "\nbuild source from SRCBUILD"
+				echo -e "\nAuthor: awolbox <awol@member.fsf.org>\n"
 		}
 		usage_error()
 		{ 
@@ -80,11 +80,11 @@ srcdepends() # list/get dependencies for source
 		{
 				for x in ${depends[@]}
 				do
-					if [ -d $SOURCE_DIR/$x ];
+					if [ -d "$SOURCE_DIR/$x" ] && [ -f "$SOURCE_DIR/SRCBUILD" ];
 					then
-							(cd $SOURCE_DIR/$x; makesrc)
+							(cd $SOURCE_DIR/$x && makesrc SRCBUILD)
 					else
-							exit $EX_UNAVAILABLE
+							exit $EX_UNAVAILABLE	
 					fi
 				done
 		}
@@ -95,13 +95,10 @@ srcdepends() # list/get dependencies for source
 				echo -e -n "\t\e[1;31mInstall?:\e[0m "
 				read u
 
-				if [ "$u" == "y" ] || [ "$u" == "Y" ] || [ "$u" == "yes" ] || [ "$u" == "Yes" ] || [ "$u" == "YES" ];
-				then
-						$resolve_depends
-				elif [ "$u" == "n" ] || [ "$u" == "N" ] || [ "$u" == "no" ] || [ "$u" == "No" ] || [ "$u" == "NO" ];
-				then
-						exit $EX_USAGE
-				fi
+				case $u in
+						'y'|'Y'|'yes'|'Yes'|'YES') $resolve_depends ;;
+						'n'|'N'|'no'|'No'|'NO') exit $EX_USAGE ;;
+				esac
 		else
 				$resolve_depends
 		fi

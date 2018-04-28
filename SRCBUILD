@@ -8,13 +8,13 @@ srcurl="https://github.com/awolbox/glfs"
 srcget="${srcurl}.git"
 srccpy=('GPLv3')
 #srcsig("")
-ccdepends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+depends=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		 			'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		 			'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
-ccprovides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
+provides=('binutils' 'gcc' 'mpfr' 'gmp' 'mpc' 'linux-API-headers' 'glibc' 'libstdc++' 'tcl-core' 'expext' 'dejagnu' 
 		  'm4' 'ncurses' 'bash' 'bison' 'bzip2' 'coreutils' 'diffutils' 'file' 'findutils' 'gawk' 'gettext' 'grep'
 		  'gzip' 'make' 'patch' 'perl' 'sed' 'tar' 'texinfo' 'util-linux' 'xz')
-#ccconflicts=('')
+#conflicts=('')
 
 ccsrcbuild()
 {		
