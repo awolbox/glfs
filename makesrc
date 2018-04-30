@@ -14,6 +14,7 @@
 }
 
 SRCBUILD_CONFIG=${SRCBUILD_USER_CONF:-$HOME/.config/srcman/makesrc.conf}
+SRCBUILD_DEFAULT_CONFIG=0
 
 # exit codes 
 EX_OK=0				# completed without error
@@ -21,13 +22,14 @@ EX_USAGE=64			# error - general command line usage error
 EX_NOPERM=70		# error - improper permissions - (root permissions needed)
 EX_UNAVAILABLE=69	# error - improper input - (SRCBUILD not found)
 EX_NOHOST=68		# error - source get failed
-EX_DATAERR=65		# error - source verification failed (.sig, checksums, etc.)
+EX_DATAERR=65		# error - corrupt data (.sig, checksums, etc.)
 EX_CANTCREAT=73		# error - makesrc failed - cannot build source
 
 # perm/sec
 readonly _UID="$(id -u "$USER")"
+readonly _GID="$(id -u "$GROUP")"
 
-# color values
+# common values
 readonly green='\e[0;32m'
 readonly yellow='\e[0;33m'
 readonly magenta='\e[0;35m'
@@ -38,36 +40,59 @@ readonly Byellow='\e[1;33m'
 readonly Bblue='\e[1;34m'
 readonly Bmagenta='\e[1;35m'
 readonly reset='\e[0m'
-
-# vebosity/ux
 _message() { [ $QUIET = 0 ] &&:; }
 _warning() { [ $QUIET = 0 ] &&:; }
 _error() { echo -e "$(basename 0): ${Bred}ERROR: ${reset} ${*}" >&2; }
-_die() { _error ${@}; }
+_die() { _error ${@} && exit $_EX; }
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 ret=$?
 
-_has_dependencies() { # check/get dependencies
-	typeset -a deps
-	deps=($@)
-
-	for a in $deps
-	do
-			$deps=${depends[*]}
-			[ -n $deps ] && [ $deps -gt 0 ] && { :; } 
-	done
+# Check to see if a user configuration was provided
+_has_userconf()
+{
+	command -v $SRCBUILD_USER_CONFIG >&2 /dev/null && { SRCBUILD_DEFAULT_CONFIG=1; } || { $SRCBUILD_DEFAULT_CONFIG=0; }
 }
 
-_tmp_space() {	# provide a random space in shared memory to use/access
-	local tmpf
-	tmpfile
+# provide a random space in shared memory
+_tmp_space()
+{
+		local tmpf
+		tmpfile
 
-	tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
+		tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
 
-	umask 066
-	[ $? -eq 0 ] && { :; } || _die "exit $EX_DATAERR"
+		umask 066
+		[ $? -eq 0 ] || _EX=$EX_NOPERM; _die "Fatal error setting permission umask for temporary files."
+		[ -r "$tmpf" ] && _EX=$EX_DATAERR; _die "Fatal error, someone may be trying to highjack temporary files."
+	
+		touch "$tmpf"
+		[ $? -eq 0 ] && _EX=$EX_USAGE; _die "Fatal error creating temporary files"
+	
+		TMP=${tmpf}
+		return 0
 }
+
+# Set permission/ownership values to source/file
+_set_proper() { # (sec/perm) - set proper ownership of all source/files
+		local path=
+		chown -R ${_UID}:${GID} ${path} || _EX=$EX_NOPERM; _die "unable to set proper ownership permissions of ${path}"
+		chmod 0711 ${path} || _EX=$EX_NOPERM; _die "unable to set proper permissions of ${path}"
+}
+
+# Check to see if building source requires dependencies
+_has_dependencies()
+{
+		typeset -a deps
+		deps=($@)
+
+		for a in $deps
+		do
+				:
+		done
+}
+
+
 usage()
 {
 		largs() { for x in ${args[@]}; do echo -n "[$x] "; done; }
@@ -89,30 +114,33 @@ usage()
 
 }
 
-srcsrcbuild() # source SRCBUILD
+# Source SRCBUILD
+cmd_source()
 {
-		if [ -f ./SRCBUILD ] && [ -O ./SRCBUILD ] && [ -r ./SRCBUILD ] && [ -G ./SRCBUILD ] && [ -n ./SRCBUILD ];
-		then
-				source ./SRCBUILD
-		else
-				exit $EX_UNAVAILABLE
-		fi
+		SRCBUILD=
+		
+		# Sanity checks
+		[ -f ./${SRCBUILD} ] && source ./SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
 }
 
-srcinfo() # read SRCBUILD "info" ($vars)
+# Read SRCBUILD information
+cmd_info()
 {
-		info_print()
-		{
-				local _color=$Bred
-				echo -e "${_color}SOURCE${reset}\n"
-				echo -e "\t$srcname - ($srcver)\n"
-				echo -e "${_color}INFO${reset}\n"
-				echo -e "  $info\n"
-				echo -e "${_color}PROJECT HOME${reset}\n"
-				echo -e "  $srcurl\n"	
-				echo -e "${_color}LICENSE${reset}"
-				echo -e "  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}\n"
-		};srcsrcbuild; info_print;
+		local _color
+				
+		# Set colors based on configuration variables
+		[ $SRCBUILD_DEFAULT_CONFIG -eq 1 ] && { _color=$infocolor; }
+		[ $SRCBUILD_DEFAULT_CONFIG -eq 0 ] && { _color=$Bred; }
+				
+		# Send various variable data to STDOUT (tidy it up a bit)
+		echo -e "${_color}SOURCE${reset}\n"
+		echo -e "\t$srcname - ($srcver)\n"
+		echo -e "${_color}INFO${reset}\n"
+		echo -e "  $info\n"
+		echo -e "${_color}PROJECT HOME${reset}\n"
+		echo -e "  $srcurl\n"	
+		echo -e "${_color}LICENSE${reset}"
+		echo -e "  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}\n"
 }
 
 srcdepends() # list/get dependencies for source
