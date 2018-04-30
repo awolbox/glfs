@@ -1,34 +1,21 @@
-#!/usr/bin/env bash
+#!/usr/bin/bash
 
-:(){ #?
-		TGTBUILD_DEV=$build_dev
-		TGTBUILD_DIR=$build_dir
-		TGTBUILD_TGT=$build_tgt
-		CCTC_USR=$toolbox_user
-		CCTC_DIR=$toolbox_dir
-		CCTC_TBX=''
-		SOURCE_GET=$source_get
-		SOURCE_DIR=$source_dir
-		SOURCE_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
-		#MAKEFLAGS=$makeflags
-}
+readonly SRCBUILD_CONFIG=${SRCBUILD_USER_CONF:-${HOME}/.config/srcman/makesrc.conf}
 
-readonly SRCBUILD_CONFIG=${SRCBUILD_USER_CONF:-$HOME/.config/srcman/makesrc.conf}
-
-readonly VERSION=2.0
+readonly VERSION='2.0'
 
 # exit codes 
-readonly EX_OK=0				# completed without error
-readonly EX_USAGE=64			# error - general command line usage error 
-readonly EX_NOPERM=70			# error - improper permissions - (root permissions needed)
-readonly EX_UNAVAILABLE=69		# error - improper input - (SRCBUILD not found)
-readonly EX_NOHOST=68			# error - source get failed
-readonly EX_DATAERR=65			# error - corrupt data (.sig, checksums, etc.)
-readonly EX_CANTCREAT=73		# error - makesrc failed - cannot build source
+readonly EX_OK='0'				# completed without error
+readonly EX_USAGE='64'			# error - general command line usage error 
+readonly EX_NOPERM='70'			# error - improper permissions - (root permissions needed)
+readonly EX_UNAVAILABLE='69'		# error - improper input - (SRCBUILD not found)
+readonly EX_NOHOST='68'			# error - source get failed
+readonly EX_DATAERR='65'			# error - corrupt data (.sig, checksums, etc.)
+readonly EX_CANTCREAT='73'		# error - makesrc failed - cannot build source
 
 # perm/sec
 readonly _UID="$(id -u "$USER")"
-readonly _GID="$(id -u "$GROUP")"
+readonly _GID="$(id -g "$USER")"
 
 # common color values
 readonly green='\e[0;32m'
@@ -48,32 +35,28 @@ _warning() { [ $QUIET = 0 ] &&:; }
 _error() { echo -e "$(basename 0): ${Bred}ERROR: ${reset} ${*}" >&2; }
 _die() { _error ${@} && exit $_EX; }
 
-# misc
-
-# Global options
-VERBOSE=0
-QUIET=0
-DEBUG=0
-DEFAULT=0
-
 cmd_version()
 {
 		cat <<-_EOF
-		$(basename 0) $VERSION - build source using a SRCBUILD file.
+		$(basename $0) $VERSION - build source using a SRCBUILD file.
 		_EOF
 }
 
 cmd_usage()
 {
-		cmd_usage_version
-		echo
-		cat <<-_EOF
-		Usage:
-			$(basename 0) 
-		Options:
-			-x, --xx	description
-		Author: awolbox <awolbox@member.fsf.org>
-		_EOF
+	cmd_version
+	echo "
+	;Usage:
+	;    $(basename $0) [Options] SRCBUILD...
+	;	
+	;Options:
+	;    -q, --query    read SRCBUILD information
+	;    -s, --silent   do not prompt the user
+	;    -v, --version  show version information
+	;    -h, --help     display this help screen
+	;	
+	;Author: awolbox <awolbox@member.fsf.org>\
+	" | cut -d ";" -f 2
 }
 
 # Check to see if a user configuration was provided
@@ -102,7 +85,8 @@ _tmp_space()
 }
 
 # Set permission/ownership values to source/file
-_set_proper() { # (sec/perm) - set proper ownership of all source/files
+_set_proper() 
+{
 		local path=
 		chown -R ${_UID}:${GID} ${path} || _EX=$EX_NOPERM; _die "unable to set proper ownership permissions of ${path}"
 		chmod 0711 ${path} || _EX=$EX_NOPERM; _die "unable to set proper permissions of ${path}"
@@ -120,19 +104,19 @@ _has_dependencies()
 		done
 }
 
-
-# Source SRCBUILD
-cmd_source()
+_source_srcbuild()
 {
-		SRCBUILD=
+		SRCBUILD=./SRCBUILD
 		
 		# Sanity checks
-		[ -f ./${SRCBUILD} ] && source ./SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
+		[ -f ./${SRCBUILD} ] && source $SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
 }
 
 # Read SRCBUILD information
 cmd_info()
 {
+	_source_info()
+	{
 		# Set color
 		local _color=$Bred
 		[ $DEFAULT -eq 1 ] && { _color=$infocolor; }
@@ -148,7 +132,14 @@ cmd_info()
 		${_color}LICENSE${reset}
 		  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
 		_EOF
+	}
+
+	while read -r ii
+	do
+		_source_info
+	done < "$TMP"
 }
+
 
 # check/get dependencies for needed source
 cmd_source_depends() 
@@ -183,7 +174,8 @@ cmd_source_depends()
 		fi
 }
 
-srcrepos() # source repository $vars (much more work needs done for this (don't know if i want it))
+# source repository $vars (much more work needs done for this (don't know if i want it))
+srcrepos() 
 {
 		:
 		#gnu_repo='https://ftp.gnu.org/gnu'
@@ -264,18 +256,41 @@ makesrc() # make a source-build from a SRCBUILD
 }
 
 # Options (getopt)
-#args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 #cargs=('--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
-small_arg="hvq"
-long_arg="help,version,query"
-opts="$($GETOPT -o $small_arg -l $long_arg -n $PROGRAM $COMMAND -- "$@")"
+
+# Global options
+VERBOSE=0
+QUIET=0
+DEBUG=0
+DEFAULT=0
+
+small_arg="hvs:q"
+long_arg="help,version,silent,query"
+opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM $COMMAND" -- "$@")"
 ret=$?
 
-while :; do case $1 in
-		-q|--query) shift; : ;;
-		-h|--help) shift; cmd_usage; return 0 ;;
+eval set -- "$opts" 
+
+while true; do case $1 in
+		-q|--query) shift; SRCBUILD=$2; shift 2;;
+		-s|--silent) shift; QUIET=0; shift ;;
+		-h|--help) shift; cmd_usage; exit 0 ;;
+		--) shift; break ;;
 esac done
 
-[ $ret -gt 0 ] && { :; }
-exit $?
+[ $ret -ne 0 ] && exit $?
+
+## TEST
+_duuno(){ #?
+		TGTBUILD_DEV=$build_dev
+		TGTBUILD_DIR=$build_dir
+		TGTBUILD_TGT=$build_tgt
+		CCTC_USR=$toolbox_user
+		CCTC_DIR=$toolbox_dir
+		CCTC_TBX=''
+		SOURCE_GET=$source_get
+		SOURCE_DIR=$source_dir
+		SOURCE_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
+		#MAKEFLAGS=$makeflags
+}
 
