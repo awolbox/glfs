@@ -6,15 +6,14 @@
 		TGTBUILD_TGT=$build_tgt
 		CCTC_USR=$toolbox_user
 		CCTC_DIR=$toolbox_dir
-		SOURCEMAN_GET=$source_get
-		SOURCEMAN_DIR=$source_dir
-		SOURCEMAN_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
 		CCTC_TBX=''
+		SOURCE_GET=$source_get
+		SOURCE_DIR=$source_dir
+		SOURCE_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
 		#MAKEFLAGS=$makeflags
 }
 
 readonly SRCBUILD_CONFIG=${SRCBUILD_USER_CONF:-$HOME/.config/srcman/makesrc.conf}
-readonly SRCBUILD_DEFAULT_CONFIG=0
 
 readonly VERSION=2.0
 
@@ -50,13 +49,37 @@ _error() { echo -e "$(basename 0): ${Bred}ERROR: ${reset} ${*}" >&2; }
 _die() { _error ${@} && exit $_EX; }
 
 # misc
-args=('-h' '--help' '-q' '--query' '-i' '--interactive')
-ret=$?
+
+# Global options
+VERBOSE=0
+QUIET=0
+DEBUG=0
+DEFAULT=0
+
+cmd_version()
+{
+		cat <<-_EOF
+		$(basename 0) $VERSION - build source using a SRCBUILD file.
+		_EOF
+}
+
+cmd_usage()
+{
+		cmd_usage_version
+		echo
+		cat <<-_EOF
+		Usage:
+			$(basename 0) 
+		Options:
+			-x, --xx	description
+		Author: awolbox <awolbox@member.fsf.org>
+		_EOF
+}
 
 # Check to see if a user configuration was provided
 _has_userconf()
 {
-	command -v $SRCBUILD_USER_CONFIG >&2 /dev/null && { SRCBUILD_DEFAULT_CONFIG=1; } || { $SRCBUILD_DEFAULT_CONFIG=0; }
+	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
 }
 
 # provide a random space in shared memory
@@ -97,22 +120,6 @@ _has_dependencies()
 		done
 }
 
-_usage_long()
-{
-		echo -e "Usage: $(basename $0) [OPTIONS]... [CCOPTIONS]... [SRCBUILD]"
-		echo -e "\nOptions:\n"
-		echo -e "  ${args[0]}, ${args[1]}\t\tshow this help screen"
-		echo -e "  ${args[2]}, ${args[3]}\t\tdisplays various information about SRCBUILD"
-		echo -e "  ${args[4]}, ${args[5]}\trun $(basename $0) interactively"
-		echo -e "\nbuild source from SRCBUILD"
-		echo -e "\nAuthor: awolbox <awol@member.fsf.org>\n"
-}
-
-_usage_error()
-{ 
-		largs() { for x in ${args[@]}; do echo -n "[$x] "; done; }
-		echo -e "$(basename $0): invalid command\nUsage: $(largs)... [SRCBUILD]" 
-}
 
 # Source SRCBUILD
 cmd_source()
@@ -126,52 +133,53 @@ cmd_source()
 # Read SRCBUILD information
 cmd_info()
 {
-		local _color
-				
-		# Set colors based on configuration variables
-		[ $SRCBUILD_DEFAULT_CONFIG -eq 1 ] && { _color=$infocolor; }
-		[ $SRCBUILD_DEFAULT_CONFIG -eq 0 ] && { _color=$Bred; }
+		# Set color
+		local _color=$Bred
+		[ $DEFAULT -eq 1 ] && { _color=$infocolor; }
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
-		echo -e "${_color}SOURCE${reset}\n"
-		echo -e "\t$srcname - ($srcver)\n"
-		echo -e "${_color}INFO${reset}\n"
-		echo -e "  $info\n"
-		echo -e "${_color}PROJECT HOME${reset}\n"
-		echo -e "  $srcurl\n"	
-		echo -e "${_color}LICENSE${reset}"
-		echo -e "  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}\n"
+		cat <<-_EOF
+		${_color}SOURCE${reset}
+				$srcname - $srcver
+		${_color}INFO${reset}
+			$info
+		${_color}PROJECT HOME${reset}
+			$srcurl
+		${_color}LICENSE${reset}
+		  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		_EOF
 }
 
-srcdepends() # list/get dependencies for source
+# check/get dependencies for needed source
+cmd_source_depends() 
 { 		
-		depends_count=$(echo "${depends[*]}" | wc -w)
+		local depends_count=$(echo "${depends[*]}" | wc -w)
 	
-		resolve_depends()
+		cmd_resolve_depends()
 		{
 				for x in ${depends[@]}
 				do
-					if [ -d "$SOURCE_DIR/$x" ] && [ -f "$SOURCE_DIR/SRCBUILD" ];
-					then
-							(cd $SOURCE_DIR/$x && makesrc SRCBUILD)
-					else
-							exit $EX_UNAVAILABLE	
-					fi
+						:
 				done
 		}
 
-		if [ "$1" == "${args[4]}" ] || [ "$1" == ${args[5]} ];
+		if [ $QUIET -eq 1 ];
 		then
-				echo -e "\n\t\e[1;31mDependencies\e[0m($depends_count)\e[1;31m:\e[0m\n\n\t\t${depends[*]}\n"
-				echo -e -n "\t\e[1;31mInstall?:\e[0m "
+				echo
+				cat <<-_EOF
+						${_color}Dependencies${reset}($depends_count)${_color}:${reset}
+				
+							${depends[*]}
+				
+				${_color}Install?:${reset}
+				_EOF
 				read u
-
 				case $u in
 						'y'|'Y'|'yes'|'Yes'|'YES') $resolve_depends ;;
-						'n'|'N'|'no'|'No'|'NO') exit $EX_USAGE ;;
-				esac
+						'n'|'N'|'no'|'No'|'NO') return $EX_USAGE ;;
+				esac;
 		else
-				$resolve_depends
+				cmd_resolve_depends
 		fi
 }
 
@@ -255,74 +263,19 @@ makesrc() # make a source-build from a SRCBUILD
 		fi
 }
 
-[ "$#" -eq 0 ] &&
-{		
-		usage; usage_error; exit $EX_USAGE;
-}
+# Options (getopt)
+#args=('-h' '--help' '-q' '--query' '-i' '--interactive')
+#cargs=('--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
+small_arg="hvq"
+long_arg="help,version,query"
+opts="$($GETOPT -o $small_arg -l $long_arg -n $PROGRAM $COMMAND -- "$@")"
+ret=$?
 
-[ "$#" -gt 0 ] &&
-{
-		[ "$1" == "${args[0]}" ] || [ "$1" == "${args[1]}" ] && 
-		{		
-				[ -z "$2" ] &&
-				{
-						usage; usage_long; exit $EX_OK;
-				}
-		}
-		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
-		{
-				[ "$2" == "SRCBUILD" ] &&
-				{
-						srcinfo; exit $?;
-				} || \
-				{
-						usage; usage_error; exit $EX_USAGE;
-				}
-		}
-		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
-		{
-				[ "2" == "SRCBUILD" ] &&
-				{
-						makesrc; exit $?; # interactive ...
-				}
-		}
-		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
-		{
-				[ -f $CONFIG_OPTIONS ] &&
-				{
-						source $CONFIG_OPTIONS;
-				}
-				makesrc; exit $?;
-		} || \
-				{
-						usage; usage_error; exit $EX_USAGE;
-				}
-}; exit $?
+while :; do case $1 in
+		-q|--query) shift; : ;;
+		-h|--help) shift; cmd_usage; return 0 ;;
+esac done
 
-cc_toolbox_optins() # TESTING system cc_toolbox options
-{
-	CARGS=('--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
-	for y in "$@"
-	do
-		for z in "${CARGS[@]}"
-		do
-			if [ "$y" == "$z" ];
-			then
-				if [ "$#" -gt 1 ];
-				then
-						case "$z" in
-							${CARGS[0]}):;;
-							${CARGS[1]}):;;
-							${CARGS[2]}):;;
-							${CARGS[3]}):;;
-							${CARGS[4]}):;;
-							${CARGS[5]}):;;
-							${CARGS[6]}):;;
-						esac
-				fi
-			fi
-		done
-	done
-}
-
+[ $ret -gt 0 ] && { :; }
+exit $?
 
