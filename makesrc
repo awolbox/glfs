@@ -43,12 +43,12 @@ readonly reset='\e[0m'
 _message() { [ $QUIET = 0 ] &&:; }
 _warning() { [ $QUIET = 0 ] &&:; }
 _error() { echo -e "$(basename 0): ${Bred}ERROR: ${reset} ${*}" >&2; }
-_die() { _error ${@} && exit $_EX; }
+_die() { _error ${@}; }
 
 args=('-h' '--help' '-q' '--query' '-i' '--interactive')
 ret=$?
 
-_has_dependencies() {
+_has_dependencies() { # check/get dependencies
 	typeset -a deps
 	deps=($@)
 
@@ -63,8 +63,10 @@ _tmp_space() {	# provide a random space in shared memory to use/access
 	local tmpf
 	tmpfile
 
-	tmpf=$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")
+	tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
 
+	umask 066
+	[ $? -eq 0 ] && { :; } || _die "exit $EX_DATAERR"
 }
 usage()
 {
