@@ -1,16 +1,77 @@
-#
-# gnu/linux "from-scratch" using makesrc and SRCBUILDS
-#
+NAME
+       makesrc - build source using a SRCBUILD
 
-makesrc:
---------	
-	
-	* build source-code using a SRCBUILD
+SYNOPSIS
+	   makesrc [Options]... [Arguments]... SRCBUILD
 
-SRCBUILD:
----------
+DESCRIPTION
+	   ::
+	   ::
+	   ::
 
-	* a file containing special $vars that makesrc understands
+NOTES
+       makesrc: build source-code using a SRCBUILD
+       SRCBUILD: a file containing special $vars that makesrc understands
+   
+       uses: echo, cat parted, tar
+       (nothing fancy, unfinished, needs mutch more work)
 
+OPTIONS
 
-NOTES: (nothing fancy, unfinished, needs mutch more work)
+	   -h, --help
+		      Show help and usage information
+
+	   -v, --version 
+			  Show version information
+
+	   -s, --silent
+			  Do not promt the user for anything. Automatically installs needed dependencies, also disables all output from STDOUT. In which case, one would have
+			  to check the return value -- ex. 'echo $?'. See EXIT STATUS for more info.
+
+	   -q, --query
+			  Queries the SRCBUILD file inside of a working directory, then sends various information to STDOUT.
+
+	   -c, --cc
+			  Instructs makesrc to cross-compile a new working toolchain. See below.
+
+   Cross-compilation toolchain options
+
+	   --cc-dev DEVICE
+			  Cross-compilition device. DEVICE equals the device name to build upon ( using "device labels" - Ex. /dev/sdx ).
+	   --cc-dir DIR
+			  Cross-compilation directory. DIR is the absolute path to the device mounted on the host system.
+	   --cc-wipe 0 R 1
+			  Choose to "wipe" disk using zeros "0", random data "R", both, or disable this function completely with "1".
+	   --cc-boot [ mbr|uefi]
+	   --cc-part PART
+	   --cc-tgt-name TGT_NAME
+	   --cc-tcx-name TCX_NAME
+
+ENVIRONMENT
+       CCTC_TBX
+       CCTC_USR
+       CCTC_DIR
+
+       TGTBUILD_DEV
+       TGTBUILD_DIR
+       TGTBUILD_TGT
+
+       SOURCE_DIR
+       SOURCE_GET
+       SOURCE_KEYRING
+
+EXIT STATUS
+       EX_OK
+       EX_USAGE
+       EX_UNAVAILABLE
+       EX_NOPERM
+       EX_DATAERR
+       EX_NOHOST
+       EX_CANTCREAT
+
+AUTHOR
+       awol <awol@member.fsf.org>
+
+SEE ALSO
+       gnu/linux "from-scratch" <https://linuxfromscratch.org>
+
