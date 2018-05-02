@@ -1,9 +1,16 @@
 src/
 !src/**/SRCBUILD
+<<<<<<< HEAD
 tst.*
+=======
+>>>>>>> development
 *.cpy
 *.CPY
 *.CHANGELOG
 *LOGIC
 *.LOGIC
+<<<<<<< HEAD
 >>>>>>> testing
+=======
+tst.*
+>>>>>>> development

@@ -3,36 +3,36 @@
 srcname=binutils
 srcver=2.30
 
-info='Binutils includes tools capable of creating and managing binary program files, including handling object files, libraries, profile data, and assembly source code.'
+srcinfo='Binutils includes tools capable of creating and managing binary program files, including handling object files, libraries, profile data, and assembly source code.'
 srccpy=('GPLv2' 'GPLv3' 'LGPLv2')
 srcurl=(https://www.gnu.org/software/binutils/)
 srcget=(https://ftp.gnu.org/gnu/$srcname/${srcname}-${srcver}.tar.gz)
 srcsig=(${srcget}.sig)
+
 #depends=('bash' 'binutils' 'coreutils' 'diffutils' 'file' 'gawk' 'gcc' 'glibc' 'grep' 'make' 'perl' 'sed' 'texinfo' 'zlib')
-testdepends=('dejagnu' 'expect')
+depends_test=('dejagnu' 'expect')
 provides=('ld' 'as' 'addr2line' 'ar' 'c++filt' 'dlltool' 'gold' 'gprof' 'nlmconv' 'nm' 'objcopy' 'objdump' 'ranlib' 'readelf' 'size' 'strings' 'strip' 'windmc' 'windres')
 conflicts=('')
 
 ccsrcbuild_pass_1(){
 		
-		cd $SRCDIR/$srcname
-		tar -xzvf ${srcname}-${srcver}.tar.gz
-		mv -v ${srcname}-${srcver} $srcver
-		
+		#cd $SOURCE_DIR/$srcname
+		#tar -xzvf ${srcname}-${srcver}.tar.gz
+		#mv -v ${srcname}-${srcver} $srcver
+		#
 		mkdir -v $srcver/build
 		cd $srcver/build
-		../configure --prefix=/$TBXUSR				\
-		   			 --with-sysroot=$DIR			\
-					 --with-lib-path=/$TBXUSR/lib	\
-		   			 --target=$TGT					\
+		../configure --prefix=/$CCTC_USR			\
+		   			 --with-sysroot=$TGTBUILD_DIR	\
+					 --with-lib-path=/$CCTC_USR/lib	\
+		   			 --target=$TGTBUILD_TGT			\
 		   			 --disable-nls					\
 		   			 --disable-werror
 		make
 		case $(uname -m) in
-				x86_64) mkdir -v /$TBXUSR/lib && ln -sv lib /$TBXUSR/lib64 ;;
+				x86_64) mkdir -v /$CCTC_USR/lib && ln -sv lib /$CCTC_USR/lib64 ;;
 		esac
 		make install
-		cd $SRCDIR
-		rm -rfv $srcname/$srcver
+		cd ~ && rm -rfv ${srcname}/${srcver}
 }
 

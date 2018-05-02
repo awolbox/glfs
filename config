@@ -1,21 +1,40 @@
 # config file for makesrc
 
-# uncomment to use wget to get source
-#source_get=wget
-
-# uncomment to use curl to get source
+# uncomment to use either curl or wget to get source
+# (only one allowed at this time)
 #source_get=curl
+source_get=wget
 
-# makeflags
+# Makeflags
 #makeflags=('-j 8')
 
-# cc toolchain
-#toolchain_dir=
-#toolchain_user=
-#build_dev=
-#build_target=
+# use color
+color=y
 
-# source
+# Color options - only valid if $color is set to y
+# possible values:
+#
+# 	red
+# 	green
+# 	yellow
+# 	megenta
+# 	bold_red
+# 	bold_green
+# 	bold_yellow
+# 	bold_blue
+# 	bold_magenta
+#
+# color valus for --query  
+infocolor=$bold_red
+
+## TESTING ##
+-------------
+
+# cc toolchain
+#toolchain_user=
+#toolchain_dir=
+#build_target=
+#build_dev=
 #source_dir=
 
 
