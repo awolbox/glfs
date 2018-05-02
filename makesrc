@@ -70,7 +70,7 @@ _usage_error()
 # Check to see if a user configuration was provided
 _has_userconf()
 { 
-	command -v $SRCBUILD_CONFIG >2& /dev/null && { DEFAULT=1; }
+	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
 }
 
 _has_keyring()
@@ -123,7 +123,7 @@ srcbuild_info()
 		+  ${srcurl}\n
 		+${_color}LICENSE${reset}\n
 		+  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
-		" | cut -d "+" -f 2 
+		" | cut -d "+" -f 2 >&2
 }
 
 # Check to see if building source requires dependencies
@@ -256,11 +256,11 @@ QUIET=0
 DEBUG=0
 DEFAULT=0
 
-# Getopt
+# Options
 small_opts="hvsq::ac:"
 long_opts="help,version,silent,query::,cc:"
 opts="$(getopt -o $small_opts -l $long_opts -n "$SRCBUILD" -- "$@")"
-return="$?"
+return=$?
 
 eval set -- "$opts"
 unset opts
@@ -269,10 +269,12 @@ while [ $return -eq 0 ]
 do
 		case "$1" in
 				'-h'|'--help') 
-						_usage; shift; continue
+						_usage
+						break
 						;;
 				'-v'|'--version')
-						_version; shift; continue
+						_version
+						break
 						;;
 				'-s'|'--silent') 
 						[ QUIET=1 ]; shift 2; continue
@@ -308,8 +310,8 @@ do
 		esac 
 done
 
-[ $return -ne 0 ] && EX=$EX_DATAERR; _die "Fatal error in 'eval set'"
-[ "$SRCBUILD" == "SRCBUILD" ] && cmd_makesrc
+[ $return -ne 0 ] && { EX=$EX_DATAERR; _die "Fatal error in eval set"; }
+[ "$SRCBUILD" == "SRCBUILD" ] && { cmd_makesrc; }
 exit $return
 
 
