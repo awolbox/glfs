@@ -68,6 +68,24 @@ _has_userconf()
 	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
 }
 
+# makesrc uses (sourceman) keyring
+_source_keyring()
+{
+	typeset -a gpgusers 
+	gpgusers=($@)
+
+		for key_id in ${gpgusers[*]}
+		do
+			gpg --list-keys "gpg_id" >&2 /dev/null
+			if [ $? -ne 0 ];
+			then
+					_warning "No valid sourceman keyrings found."	
+					return 1
+			fi
+		done
+		return 0
+}
+
 # Provide a random space in shared memory
 _tmp_space()
 { 
@@ -95,18 +113,7 @@ _set_proper()
 		chmod 0711 ${path} || _EX=$EX_NOPERM; _die "unable to set proper permissions of ${path}"
 }
 
-# Check to see if building source requires dependencies
-_has_dependencies()
-{ 
-		typeset -a deps
-		deps=($@)
-
-		for a in $deps
-		do
-				:
-		done
-}
-
+# Parse/Source SRCBUILD $vars
 _source_srcbuild()
 {
 		SRCBUILD=./SRCBUILD
@@ -115,7 +122,7 @@ _source_srcbuild()
 		[ -f ./${SRCBUILD} ] && source $SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
 }
 
-# Read SRCBUILD information
+# Send SRCBUILD information to STDOUT
 cmd_info()
 { 
 	_source_info()
@@ -143,7 +150,27 @@ cmd_info()
 	done < "$TMP"
 }
 
-# Check/Get dependencies for needed source
+# Source repository $vars (much more work needs done for this (don't know if i want it))
+srcrepos() 
+{ 
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
+}
+
+# Check to see if building source requires dependencies
+_has_dependencies()
+{ 
+		typeset -a deps
+		deps=($@)
+
+		for a in $deps
+		do
+				:
+		done
+}
+
+# Get needed dependencies for source
 cmd_source_depends() 
 { 
 		local depends_count=$(echo "${depends[*]}" | wc -w)
@@ -174,14 +201,6 @@ cmd_source_depends()
 		else
 				cmd_resolve_depends
 		fi
-}
-
-# Source repository $vars (much more work needs done for this (don't know if i want it))
-srcrepos() 
-{ 
-		:
-		#gnu_repo='https://ftp.gnu.org/gnu'
-		#savannah_repo=''	
 }
 
 # Make a source-build from a SRCBUILD

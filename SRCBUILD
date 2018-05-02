@@ -3,7 +3,7 @@
 srcname=gnu_linux_from_scratch
 srcver=1.0
 srcarch=x86_64
-info='Gnu/Linux system SRCBUILD'
+srcinfo='Gnu/Linux system SRCBUILD'
 srcurl="https://github.com/awolbox/glfs"
 srcget="${srcurl}.git"
 srccpy=('GPLv3')
