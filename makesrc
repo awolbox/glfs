@@ -34,7 +34,7 @@ readonly reset='\e[0m'
 # ux
 _message() { [ $QUIET = 0 ] && echo -e "${bold_green} * ${reset} ${*}" >&2; }
 _warning() { [ $QUIET = 0 ] && echo -e "${bold_yellow} [W] ${reset} ${*}" >&2; }
-_error() { echo -e "$(basename 0): ${bold_red} [X] ${reset} ${*}" >&2; }
+_error() { echo -e "$(basename $0): ${bold_red} [X] ${reset} ${*}" >&2; }
 _die() { _error ${@} && exit $_EX; }
 
 _version()
@@ -71,19 +71,11 @@ _has_userconf()
 # makesrc uses (sourceman) keyring
 _source_keyring()
 {
-	typeset -a gpgusers 
-	gpgusers=($@)
+	typeset -a keyring
+	keyring='sourceman.keys'
 
-		for key_id in ${gpgusers[*]}
-		do
-			gpg --list-keys "gpg_id" >&2 /dev/null
-			if [ $? -ne 0 ];
-			then
-					_warning "No valid sourceman keyrings found."	
-					return 1
-			fi
-		done
-		return 0
+	[ -e $HOME/.gnupg/${keyring} ] && { return 0; } || \
+	_warning "No valid sourceman keyrings found."; return 1
 }
 
 # Provide a random space in shared memory
@@ -116,38 +108,31 @@ _set_proper()
 # Parse/Source SRCBUILD $vars
 _source_srcbuild()
 {
-		SRCBUILD=./SRCBUILD
+		[ "$SRCBUILD" == "SRCBUILD" ] &&
 		
 		# Sanity checks
+		[ -e $SRCBUILD ] && [ -O $SRCBUILD ] && [ -G $SRCBUILD ] && [ -n $SRCBUILD ] && \
 		[ -f ./${SRCBUILD} ] && source $SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
 }
 
 # Send SRCBUILD information to STDOUT
-cmd_info()
-{ 
-	_source_info()
-	{
+_source_info()
+{
 		# Set color
 		local _color=$bold_red
 		[ $DEFAULT -eq 1 ] && { _color=$infocolor; }
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
 		echo "\
-		;${_color}SOURCE${reset}
-		;    $srcname - $srcver
-		;${_color}INFO${reset}
-		;    $srcinfo
-		;${_color}PROJECT HOME${reset}
-		;    $srcurl
-		;${_color}LICENSE${reset}
-		;  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		${_color}SOURCE${reset}
+		    $srcname - $srcver
+		${_color}INFO${reset}
+		    $srcinfo
+		${_color}PROJECT HOME${reset}
+		    $srcurl
+		${_color}LICENSE${reset}
+		  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
 		" | cut -d ";" -f 2
-	}
-
-	while read -r ii
-	do
-		_source_info
-	done < "$TMP"
 }
 
 # Source repository $vars (much more work needs done for this (don't know if i want it))
@@ -293,13 +278,13 @@ ret=$?
 eval set -- "$opts" 
 
 while true; do case $1 in
-		-q|--query) shift; SRCBUILD=$2; shift 2;;
+		-q|--query) shift; SRCBUILD=$1; _source_srcbuild; source_info; shift 2;;
 		-s|--silent) shift; QUIET=0; shift ;;
 		-h|--help) shift; _usage; exit 0 ;;
 		--) shift; break ;;
 esac done
 
-[ $PROGRAM == "SRCBUILD" ] && cmd_makesrc
+[ "$PROGRAM" == "SRCBUILD" ] && cmd_makesrc
 [ $ret -ne 0 ] && exit $?
 
 ## TEST
