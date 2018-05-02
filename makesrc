@@ -256,40 +256,6 @@ QUIET=0
 DEBUG=0
 DEFAULT=0
 
-<<<<<<< HEAD
-		[ "$1" == "${args[0]}" ] || [ "$1" == "${args[1]}" ] && 
-		{		
-				[ -z "$2" ] &&
-				{
-						usage; usage_long; exit $EX_OK;
-				}
-		}
-		[ "$1" == "${args[2]}" ] || [ "$1" == "${args[3]}" ] &&
-		{
-				[ "$2" == "SRCBUILD" ] &&
-				{
-						srcinfo; exit $?;
-				} || \
-				{
-						usage; usage_error; exit $EX_USAGE;
-				}
-		}
-		[ "$1" == "${args[4]}" ] || [ "$1" == "${args[5]}" ] &&
-		{
-				[ "2" == "SRCBUILD" ] &&
-				{
-						makesrc; exit $?;
-				}
-		}
-		[ "$1" == "SRCBUILD" ] && [ -z "$2" ] &&
-		{
-				makesrc; exit $?;
-		} || \
-				{
-						usage; usage_error; exit $EX_USAGE;
-				}
-}; exit $?
-=======
 # Options
 small_opts="hvsq::ac:"
 long_opts="help,version,silent,query::,cc:"
@@ -347,6 +313,4 @@ done
 [ $return -ne 0 ] && { EX=$EX_DATAERR; _die "Fatal error in eval set"; }
 [ "$SRCBUILD" == "SRCBUILD" ] && { cmd_makesrc; }
 exit $return
-
->>>>>>> development
 
