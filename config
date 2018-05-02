@@ -1,10 +1,11 @@
 # config file for makesrc
 
 # uncomment to use either curl or wget to get source
+# (only one allowed at this time)
 #source_get=curl
 source_get=wget
 
-# makeflags
+# Makeflags
 #makeflags=('-j 8')
 
 # use color
@@ -12,10 +13,19 @@ color=y
 
 # Color options - only valid if $color is set to y
 # possible values:
-# 	xxx
-# 	xxx
-# 	xxx
-infocolor=$Bred
+#
+# 	red
+# 	green
+# 	yellow
+# 	megenta
+# 	bold_red
+# 	bold_green
+# 	bold_yellow
+# 	bold_blue
+# 	bold_magenta
+#
+# color valus for --query  
+infocolor=$bold_red
 
 ## TESTING ##
 -------------

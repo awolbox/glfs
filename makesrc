@@ -61,10 +61,28 @@ _usage()
 		" | cut -d ";" -f 2
 }
 
+_usage_error()
+{
+		_EX=$EX_USAGE
+		_die "Invalid usage or command - see '-h' or '--help' for more info"
+}
+
 # Check to see if a user configuration was provided
 _has_userconf()
 { 
-	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
+	command -v $SRCBUILD_CONFIG >2& /dev/null && { DEFAULT=1; }
+}
+
+_has_keyring()
+{
+		typeset -a keyring
+		keyring=$HOME/.gnupg/'source.keys'
+
+		[ -z $SOURCE_KEYRING ] &&
+		{
+				_warning "No valid sourceman keyrings found."; return 1
+				wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=$SOURCE_DIR;
+		}
 }
 
 # Source repositories (much more work needs done for this (don't know if i want it))
@@ -78,42 +96,43 @@ _source_repositories()
 # Parse/Source SRCBUILD $vars
 _read_srcbuild()
 {
-		SRCBUILD='SRCBUILD'
-		
 		# Sanity checks
-		[ -f "./${SRCBUILD}" ] && [ -O "./${SRCBUILD}" ] && [ -G "./${SRCBUILD}" ] && [ -n "./${SRCBUILD}" ] &&
-		{ source "./${SRCBUILD}"; } || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
+		if [ -f "./SRCBUILD" ] && [ -O "./SRCBUILD" ];
+		then
+				source ./SRCBUILD
+		else
+				_EX=$EX_UNAVAILABLE
+				_die "Fatal error in SRCBUILD"
+		fi
 }
 
 # Send SRCBUILD information to STDOUT
-_srcbuild_info()
+srcbuild_info()
 {
 		# Set color
 		local _color=$bold_red
 		[ $DEFAULT -eq 1 ] && { _color=$infocolor; }
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
-		echo "\
-		${_color}SOURCE${reset}
-		    $srcname - $srcver
-		${_color}INFO${reset}
-		    $srcinfo
-		${_color}PROJECT HOME${reset}
-		    $srcurl
-		${_color}LICENSE${reset}
-		  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
-		" | cut -d ";" -f 2
+		echo -e "
+		+${_color}SOURCE${reset}\n
+		+  ${srcname} - ${srcver}\n
+		+${_color}INFO${reset}\n
+		+  ${srcinfo}\n
+		+${_color}PROJECT HOME${reset}\n
+		+  ${srcurl}\n
+		+${_color}LICENSE${reset}\n
+		+  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		" | cut -d "+" -f 2 
 }
 
 # Check to see if building source requires dependencies
 _has_needed_dependencies()
-{ 
-		typeset -a deps
-		deps=($@)
-
-		for a in $deps
+{
+		for n in ${depends[*]}
 		do
-				: # check if needed dependenciess are in order
+				[ -d $SOURCE_DIR/$n ] && { [ -e $SOURCE_ARCHIVE ] || [ -f $SRCBUILD ] && return 0; } \
+						|| { _warning "There are dependencies needed to build source"; return 1; }
 		done
 }
 
@@ -165,30 +184,16 @@ _get_source()
 # Verify source signature using keyring
 _source_verify()
 {
-	
-		typeset -a keyring
-		keyring='source.keys'
-
-		[ -e $HOME/.gnupg/${keyring} ] && { return 0; } || \
-
-		# check for keyring
-		if [ -z $SOURCE_KEYRING ];
+		# Send verification to shared memory then send to STDOUT
+		gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig >2& \
+				$TMP && cat $TMP | grep "GOOD"
+		
+		# Fatal error - should be handled
+		if [ $? -eq 0 ];
 		then
-				_warning "No valid sourceman keyrings found."; return 1
-				wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=$SOURCE_DIR
-		else 
-				src_get
-				
-				# verify_sig
-				gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
-						.VERIFY && cat .VERIFY | grep "GOOD"
-				if [ `verify_sig` == "Good" ];
-				then
-						srcextr
-						$srcbuild									
-				else
-						exit $EX_DATAERR
-				fi
+				return 0;									
+		else
+				_EX=$EX_DATAERR; _die "Fatal error - source verification failure"
 		fi
 }
 
@@ -217,30 +222,13 @@ makesrc()
 				
 		[ $EUID -ne 0 ] && { exit $EX_NOPERM; }
 				
-		_has_keyring
 		_read_srcbuild 
+		_has_keyring
 	 	_has_needed_dependencies
 		
 		# cross-compilation toolchian
-		[ "$srcname" == "$CCCTBX" ] && 
-		{
-				:# cross-compile toolchain
-		}
 
-		# depends
-		if [ -n "${depends[*]}" ];
-		then
-				: check
-		
-		# source tarball
-		elif [ -e $SOURCE_DIR/${srcname}/$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname") ];
-		then
-				srcextr
-				$srcbuild
-		
-		else
-				:
-		fi
+		# _source_tarball
 }
 
 # Global options
@@ -250,34 +238,58 @@ DEBUG=0
 DEFAULT=0
 
 # Getopt
-small_opts="hvsq::"
-long_opts="help,version,silent,query::"
+small_opts="hvsq::ac:"
+long_opts="help,version,silent,query::,cc:"
 opts="$(getopt -o $small_opts -l $long_opts -n "$SRCBUILD" -- "$@")"
 return="$?"
 
 eval set -- "$opts"
 unset opts
 
-while [ $? -eq 0 ]
+while [ $return -eq 0 ]
 do
 		case "$1" in
-		'-h'|'--help') 
-				_usage; shift; continue
-				;;
-		'-v'|'--version')
-				_version; shift; continue
-				;;
-		'-s'|'--silent') 
-				[ QUIET=1 ]; shift 2; continue
-				;;
-		'--') 
-				shift; break ;;
-		*)
-				_EX=$EX_USAGE; _die "Invalid command - see '-h' or '--help'"
+				'-h'|'--help') 
+						_usage; shift; continue
+						;;
+				'-v'|'--version')
+						_version; shift; continue
+						;;
+				'-s'|'--silent') 
+						[ QUIET=1 ]; shift 2; continue
+						;;
+				'-q'|'--query')
+						case $2 in
+								'-a'|'--all')
+										: # long query
+										;;
+								
+								*)
+										_read_srcbuild
+										srcbuild_info
+										;;
+						esac
+						shift 2
+						continue
+						;;
+				'-c'|'--cc')
+						:
+						: # cross-compiler options
+						:
+						shift
+						continue
+						;;
+				'--') 
+						shift
+						break
+						;;
+				*)
+					   	_usage_error
+						;;
 		esac 
 done
 
-[ $? -ne 0 ] && { EX=$EX_DATAERR; _die "Fatal error in 'eval set'"; }
-[ "$SRCBUILD" == "SRCBUILD" ] && { cmd_makesrc; }
+[ $return -ne 0 ] && EX=$EX_DATAERR; _die "Fatal error in 'eval set'"
+[ "$SRCBUILD" == "SRCBUILD" ] && cmd_makesrc
 exit $return
 
