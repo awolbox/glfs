@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 readonly SOURCEBUILD_CONFIG=${SRCBUILD_USER_CONF:-${HOME}/.config/srcman/makesrc.conf}
-readonly SOURCEBUILD_KEYRING=
+readonly SOURCEBUILD_KEYRING=${SRCBUILD_USER_KEYS:-${HOME}/.gnupg/source.keys}
 readonly SOURCEBUILD_DIR=
 
 readonly VERSION='2.0'
@@ -39,27 +39,26 @@ _die() { _error ${@} && exit $_EX; }
 
 _version()
 {
-		cat <<-_EOF
-		$(basename $0) $VERSION - build source using a SRCBUILD file.
-		_EOF
+		echo -e "\
+		;$(basename $0) $VERSION - build source using a SRCBUILD file.\
+		" | cut -d ";" -f 2
 }
 
 _usage()
 {
-	_version
-	cat <<-_EOF
-	
-	Usage:
-	    $(basename $0) [Options] SRCBUILD...
-		
-	Options:
-	    -q, --query    read SRCBUILD information
-	    -s, --silent   do not prompt the user
-	    -v, --version  show version information
-	    -h, --help     display this help screen
-		
-	Author: awol <awol@member.fsf.org>
-	_EOF
+		_version
+		echo "
+		;Usage:
+		;    $(basename $0) [Options] SRCBUILD...
+		;	
+		;Options:
+		;    -q, --query    read SRCBUILD information
+		;    -s, --silent   do not prompt the user
+		;    -v, --version  show version information
+		;    -h, --help     display this help screen
+		;	
+		;Author: awol <awol@member.fsf.org>\
+		" | cut -d ";" -f 2
 }
 
 # Check to see if a user configuration was provided
@@ -68,55 +67,26 @@ _has_userconf()
 	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
 }
 
-# makesrc uses (sourceman) keyring
-_source_keyring()
-{
-	typeset -a keyring
-	keyring='sourceman.keys'
-
-	[ -e $HOME/.gnupg/${keyring} ] && { return 0; } || \
-	_warning "No valid sourceman keyrings found."; return 1
-}
-
-# Provide a random space in shared memory
-_tmp_space()
+# Source repositories (much more work needs done for this (don't know if i want it))
+_source_repositories() 
 { 
-		local tmpf
-		tmpfile
-
-		tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
-
-		umask 066
-		[ $? -eq 0 ] || _EX=$EX_NOPERM; _die "Fatal error setting permission umask for temporary files."
-		[ -r "$tmpf" ] && _EX=$EX_DATAERR; _die "Fatal error, someone may be trying to highjack temporary files."
-	
-		touch "$tmpf"
-		[ $? -eq 0 ] && _EX=$EX_USAGE; _die "Fatal error creating temporary files"
-	
-		TMP=${tmpf}
-		return 0
-}
-
-# Set permission/ownership values to source/file
-_set_proper() 
-{ 
-		local path=
-		chown -R ${_UID}:${GID} ${path} || _EX=$EX_NOPERM; _die "unable to set proper ownership permissions of ${path}"
-		chmod 0711 ${path} || _EX=$EX_NOPERM; _die "unable to set proper permissions of ${path}"
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
 }
 
 # Parse/Source SRCBUILD $vars
-_source_srcbuild()
+_read_srcbuild()
 {
-		[ "$SRCBUILD" == "SRCBUILD" ] &&
+		SRCBUILD='SRCBUILD'
 		
 		# Sanity checks
-		[ -e $SRCBUILD ] && [ -O $SRCBUILD ] && [ -G $SRCBUILD ] && [ -n $SRCBUILD ] && \
-		[ -f ./${SRCBUILD} ] && source $SRCBUILD || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
+		[ -f "./${SRCBUILD}" ] && [ -O "./${SRCBUILD}" ] && [ -G "./${SRCBUILD}" ] && [ -n "./${SRCBUILD}" ] &&
+		{ source "./${SRCBUILD}"; } || _EX=$EX_UNAVAILABLE; _die "Fatal error in SRCBUILD"
 }
 
 # Send SRCBUILD information to STDOUT
-_source_info()
+_srcbuild_info()
 {
 		# Set color
 		local _color=$bold_red
@@ -135,32 +105,22 @@ _source_info()
 		" | cut -d ";" -f 2
 }
 
-# Source repository $vars (much more work needs done for this (don't know if i want it))
-srcrepos() 
-{ 
-		:
-		#gnu_repo='https://ftp.gnu.org/gnu'
-		#savannah_repo=''	
-}
-
 # Check to see if building source requires dependencies
-_has_dependencies()
+_has_needed_dependencies()
 { 
 		typeset -a deps
 		deps=($@)
 
 		for a in $deps
 		do
-				:
+				: # check if needed dependenciess are in order
 		done
 }
 
 # Get needed dependencies for source
-cmd_source_depends() 
+_get_needed_dependencies() 
 { 
-		local depends_count=$(echo "${depends[*]}" | wc -w)
-	
-		cmd_resolve_depends()
+		resolve_depends()
 		{
 				for x in ${depends[@]}
 				do
@@ -170,6 +130,7 @@ cmd_source_depends()
 
 		if [ $QUIET -eq 1 ];
 		then
+				local depends_count=$(echo "${depends[*]}" | wc -w)
 				echo
 				cat <<-_EOF
 						${_color}Dependencies${reset}($depends_count)${_color}:${reset}
@@ -180,86 +141,105 @@ cmd_source_depends()
 				_EOF
 				read u
 				case $u in
-						'y'|'Y'|'yes'|'Yes'|'YES') $resolve_depends ;;
+						'y'|'Y'|'yes'|'Yes'|'YES') resolve_depends ;;
 						'n'|'N'|'no'|'No'|'NO') return $EX_USAGE ;;
 				esac;
 		else
-				cmd_resolve_depends
+				resolve_depends
 		fi
 }
 
-# Make a source-build from a SRCBUILD
+# Get source from repository
+_get_source()
+{
+		if [ "$source_get" == "wget" ];
+		then
+				wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+				wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+		elif [ "$source_get" == "curl" ];
+		then
+				:
+		fi
+}
+
+# Verify source signature using keyring
+_source_verify()
+{
+	
+		typeset -a keyring
+		keyring='source.keys'
+
+		[ -e $HOME/.gnupg/${keyring} ] && { return 0; } || \
+
+		# check for keyring
+		if [ -z $SOURCE_KEYRING ];
+		then
+				_warning "No valid sourceman keyrings found."; return 1
+				wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=$SOURCE_DIR
+		else 
+				src_get
+				
+				# verify_sig
+				gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
+						.VERIFY && cat .VERIFY | grep "GOOD"
+				if [ `verify_sig` == "Good" ];
+				then
+						srcextr
+						$srcbuild									
+				else
+						exit $EX_DATAERR
+				fi
+		fi
+}
+
+# Extract source tarball (more support for other filetypes later)
+_source_extract() 
+{
+		v=$(ls . | grep ".tar" | grep -v ".sig")
+		w=$(echo "$(${v})" | cut -d "." -f 4)
+		
+		if [ "$w" == "xz" ] || [ "$w" == "gz" ];
+		then
+				tar xzvf $(${v})
+		elif [ "$w" == "bz2" ];
+		then
+				tar xzvf $(${v})
+		else
+				echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
+						FILE TYPE: $(${w})\n"
+				exit $EX_UNAVAILABLE
+		fi
+}
+
+# Make/Build source
 makesrc() 
 { 
-		_extract() # extract source tarball (more support for other filetypes later)
-		{
-			v=$(ls . | grep ".tar" | grep -v ".sig")
-			w=$(echo "$(${v})" | cut -d "." -f 4)
-			
-			if [ "$w" == "xz" ] || [ "$w" == "gz" ];
-			then
-					tar xzvf $(${v})
-			elif [ "$w" == "bz2" ];
-			then
-					tar xzvf $(${v})
-			else
-					echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
-							FILE TYPE: $(${w})\n"
-					exit $EX_UNAVAILABLE
-			fi
-		}
+				
+		[ $EUID -ne 0 ] && { exit $EX_NOPERM; }
+				
+		_has_keyring
+		_read_srcbuild 
+	 	_has_needed_dependencies
 		
-		_get_source() # TESTING - (unstable)
+		# cross-compilation toolchian
+		[ "$srcname" == "$CCCTBX" ] && 
 		{
-			if [ "$source_get" == "wget" ];
-			then
-					wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
-					wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
-			elif [ "$source_get" == "curl" ];
-			then
-					:
-			fi
-		}
-		
-		_source_srcbuild 
-		
-		[ $EUID -ne 0 ] &&
-		{
-				exit $EX_NOPERM;
+				:# cross-compile toolchain
 		}
 
-		[ "$srcname" == "$CCCTBX" ]; # CC_TOOLCHAIN
-		{
-				:# cross-compilation toolchain
-		}
-
+		# depends
 		if [ -n "${depends[*]}" ];
 		then
-				srcdepends
-		elif [ -e $SOURCE_DIR/$srcname/$(ls . | grep ".tar" | grep -v ".sig") ];
+				: check
+		
+		# source tarball
+		elif [ -e $SOURCE_DIR/${srcname}/$(ls . | grep ".tar" | grep -v ".sig" | grep "$srcname") ];
 		then
 				srcextr
 				$srcbuild
+		
 		else
-				if [ -z $SOURCE_DIR/gnu-keyring.gpg ];
-				then
-						wget https://ftp.gnu.org/gnu/gnu-keyring.gpg --directory-prefix=$SOURCE_DIR
-				elif [ -e $SOURCE_DIR/gnu-keyring.gpg ] && [ -n $SOURCE_DIR/gnu-keyring.gpg ];
-				then
-						src_get
-						verify_sig()
-						{
-								gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig 2> \
-										.VERIFY && cat .VERIFY | grep "GOOD"
-						}
-						if [ `verify_sig` == "Good" ];
-						then
-								srcextr
-								$srcbuild									
-						else
-								exit $EX_DATAERR
-						fi
-				fi
+				:
 		fi
 }
 
@@ -270,35 +250,34 @@ DEBUG=0
 DEFAULT=0
 
 # Getopt
-small_arg="hvs:q"
-long_arg="help,version,silent,query"
-opts="$(getopt -o $small_arg -l $long_arg -n "$PROGRAM $COMMAND" -- "$@")"
-ret=$?
+small_opts="hvsq::"
+long_opts="help,version,silent,query::"
+opts="$(getopt -o $small_opts -l $long_opts -n "$SRCBUILD" -- "$@")"
+return="$?"
 
-eval set -- "$opts" 
+eval set -- "$opts"
+unset opts
 
-while true; do case $1 in
-		-q|--query) shift; SRCBUILD=$1; _source_srcbuild; source_info; shift 2;;
-		-s|--silent) shift; QUIET=0; shift ;;
-		-h|--help) shift; _usage; exit 0 ;;
-		--) shift; break ;;
-esac done
+while [ $? -eq 0 ]
+do
+		case "$1" in
+		'-h'|'--help') 
+				_usage; shift; continue
+				;;
+		'-v'|'--version')
+				_version; shift; continue
+				;;
+		'-s'|'--silent') 
+				[ QUIET=1 ]; shift 2; continue
+				;;
+		'--') 
+				shift; break ;;
+		*)
+				_EX=$EX_USAGE; _die "Invalid command - see '-h' or '--help'"
+		esac 
+done
 
-[ "$PROGRAM" == "SRCBUILD" ] && cmd_makesrc
-[ $ret -ne 0 ] && exit $?
-
-## TEST
-#cargs=('--source-dir' '--cc' '--cc-dev' '--cc_boot' '--cc-part' '--cc-tgt-name' '--cc-tbx-name')
-#_duuno(){ #?
-#		TGTBUILD_DEV=$build_dev
-#		TGTBUILD_DIR=$build_dir
-#		TGTBUILD_TGT=$build_tgt
-#		CCTC_USR=$toolbox_user
-#		CCTC_DIR=$toolbox_dir
-#		CCTC_TBX=''
-#		SOURCE_GET=$source_get
-#		SOURCE_DIR=$source_dir
-#		SOURCE_KEYRING=/home/$CCTC_USR/.gnupg/sourceman.keys
-#		MAKEFLAGS=$makeflags
-#}
+[ $? -ne 0 ] && { EX=$EX_DATAERR; _die "Fatal error in 'eval set'"; }
+[ "$SRCBUILD" == "SRCBUILD" ] && { cmd_makesrc; }
+exit $return
 
