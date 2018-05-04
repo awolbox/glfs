@@ -7,7 +7,7 @@ _read_SRCBUILD()
 				source ./SRCBUILD
 		else
 				_EX=$EXIT_UNAVAILABLE
-				_die "error in SRCBUILD"
+				_die "invalid SRCBUILD"
 		fi
 }
 

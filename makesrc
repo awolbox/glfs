@@ -70,7 +70,7 @@ fi
 
 if [ -z $1 ]
 then
-		usage_error
+		_usage_error
 fi
 
 # Execution
