@@ -1,0 +1,8 @@
+# Source repositories (much more work needs done for this (don't know if i want it))
+_repositories() 
+{ 
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
+}
+

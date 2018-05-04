@@ -1,0 +1,19 @@
+# Extract source tarball (more support for other filetypes later)
+_source_extract() 
+{
+		v=$(ls . | grep ".tar" | grep -v ".sig")
+		w=$(echo "$(${v})" | cut -d "." -f 4)
+		
+		if [ "$w" == "xz" ] || [ "$w" == "gz" ];
+		then
+				tar xzvf $(${v})
+		elif [ "$w" == "bz2" ];
+		then
+				tar xzvf $(${v})
+		else
+				echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
+						FILE TYPE: $(${w})\n"
+				exit $EX_UNAVAILABLE
+		fi
+}
+

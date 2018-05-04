@@ -1,0 +1,16 @@
+# Verify source signature using keyring
+_source_verify()
+{
+		# Send verification to shared memory then send to STDOUT
+		gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig >2& \
+				$TMP && cat $TMP | grep "GOOD"
+		
+		# Fatal error - should be handled
+		if [ $? -eq 0 ];
+		then
+				return 0;									
+		else
+				_EX=$EX_DATAERR; _die "Fatal error - source verification failure"
+		fi
+}
+

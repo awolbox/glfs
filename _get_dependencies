@@ -1,0 +1,32 @@
+# Get needed dependencies for source
+_get_dependencies() 
+{ 
+		resolve_depends()
+		{
+				for x in ${depends[@]}
+				do
+						:
+				done
+		}
+
+		if [ $QUIET -eq 1 ];
+		then
+				local depends_count=$(echo "${depends[*]}" | wc -w)
+				echo
+				cat <<-_EOF
+						${_color}Dependencies${reset}($depends_count)${_color}:${reset}
+				
+							${depends[*]}
+				
+				${_color}Install?:${reset}
+				_EOF
+				read u
+				case $u in
+						'y'|'Y'|'yes'|'Yes'|'YES') resolve_depends ;;
+						'n'|'N'|'no'|'No'|'NO') return $EX_USAGE ;;
+				esac;
+		else
+				resolve_depends
+		fi
+}
+

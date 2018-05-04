@@ -1,0 +1,23 @@
+# Send SRCBUILD information to STDOUT
+get_info()
+{
+		_has_user_config
+		_read_srcbuild
+		
+		# Set color
+		local _color=$bold_red
+		[ $DEFAULT -eq 1 ] && { _color=$infocolor; }
+				
+		# Send various variable data to STDOUT (tidy it up a bit)
+		echo -e "
+		+${_color}SOURCE${reset}\n
+		+  ${srcname} - ${srcver}\n
+		+${_color}INFO${reset}\n
+		+  ${srcinfo}\n
+		+${_color}PROJECT HOME${reset}\n
+		+  ${srcurl}\n
+		+${_color}LICENSE${reset}\n
+		+  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		" | cut -d "+" -f 2 >&2
+}
+

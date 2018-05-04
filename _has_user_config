@@ -1,0 +1,12 @@
+# Check to see if a user configuration was provided
+_has_user_config()
+{ 
+		if [ $DEFAULT -ne 0 ];
+		then
+				
+				source "${MAKESRC_USER_CONFIG}"
+		else
+				return 0
+		fi
+}
+

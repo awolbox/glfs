@@ -1,5 +1,6 @@
-src/
 !src/**/SRCBUILD
+!src/SRCBUILD
+src/*
 *.cpy
 *.CPY
 *LOGIC

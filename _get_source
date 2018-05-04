@@ -1,0 +1,13 @@
+# Get source from repository
+_get_source()
+{
+		if [ "$source_get" == "wget" ];
+		then
+				wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+				wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+		elif [ "$source_get" == "curl" ];
+		then
+				:
+		fi
+}
+

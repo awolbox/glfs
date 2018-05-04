@@ -1,0 +1,19 @@
+# Provide a random space in shared memory
+_tmp_space()
+{ 
+        local tmpf
+        tmpfile
+
+        tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
+
+        umask 066
+        [ $? -eq 0 ] || _EX=$EX_NOPERM; _die "Fatal error setting permission umask for temporary files."                                                                          
+        [ -r "$tmpf" ] && _EX=$EX_DATAERR; _die "Fatal error, someone may be trying to highjack temporary files."                                                                 
+
+        touch "$tmpf"
+        [ $? -eq 0 ] && _EX=$EX_USAGE; _die "Fatal error creating temporary files"
+
+        TMP=${tmpf}
+        return 0
+}
+
