@@ -25,11 +25,9 @@ color=y
 # 	bold_magenta
 #
 # color valus for --query  
-infocolor=$bold_red
+infocolor=$bold_yellow
 
 ## TESTING ##
--------------
-
 # cc toolchain
 #toolchain_user=
 #toolchain_dir=
