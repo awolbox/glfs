@@ -1,5 +1,5 @@
 # Send SRCBUILD information to STDOUT
-get_info()
+cmd_get_info()
 {
 		_has_user_config
 		_read_SRCBUILD
