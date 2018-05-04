@@ -3,7 +3,7 @@
 # Make/Build source
 makesrc() 
 { 
-		[ $EUID -ne 0 ] && { exit $EX_NOPERM; }
+		[ $EUID -ne 0 ] && { _EX=$EXIT_NOPERM; _die "not root"; }
 				
 		# Cross-compilation-toolchian options
 		_has_keyring
@@ -11,5 +11,6 @@ makesrc()
 		_has_needed_dependencies
 		
 		# Source tarball
+
 }
 

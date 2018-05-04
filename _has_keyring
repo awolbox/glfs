@@ -3,10 +3,10 @@ _has_keyring()
 {
 		_check_keyring()
 		{
-				typeset -a keyring
+				#typeset -a KEYRING
 				KEYRING=${SOURCE_DIR}/gnu-keyring.gpg
 
-				if [ ! -e $keyring ];
+				if [ ! -e "$KEYRING" ];
 				then
 							_warning "No valid source keyrings found."
 							return 1
