@@ -28,11 +28,12 @@ color='on'
 # color valus for --query  
 query_color=$bold_red
 
-# cc toolchain
-#toolchain_user=
-#toolchain_dir=
-#build_target=
-#build_dev=
-#source_dir=
+# Cc toolchain options
+#target_build_device=
+#target_build_directory=
+#target_build_boot=
+#target_build_partitions=
+#target_build_target=
+#target_build_wipe=True
 
 

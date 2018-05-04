@@ -1,15 +1,15 @@
+#!/bin/bash
+
 # Make/Build source
 makesrc() 
 { 
-				
 		[ $EUID -ne 0 ] && { exit $EX_NOPERM; }
 				
+		# Cross-compilation-toolchian options
 		_has_keyring
 		_read_SRCBUILD
-	 	_has_needed_dependencies
+		_has_needed_dependencies
 		
-		# cross-compilation toolchian
-
-		# _source_tarball
+		# Source tarball
 }
 
