@@ -4,13 +4,22 @@ get_info()
 		_has_user_config
 		_read_SRCBUILD
 		
-		# Set color
-		valid_colors=('red''green''yellow''bold_red''bold_green''bold_yellow')
-		
+		# Set color 
+		local _valid_colors=('red''green''yellow''blue''magenta''bold_red''bold_green''bold_yellow''bold_blue''bold_magenta')
 		local _color=$bold_red
-		if [ $DEFAULT -eq 1 ] && [ "$color" == "on" ] && [ "$infocolor" ]
+		
+		if [ "$DEFAULT" == "1" ] && [ -z "$color" ] || [ "$color" == "off" ]
 		then
-					_color=$infocolor
+				 _color=''
+		elif [ "$DEFAULT" == "1" ] && [ -n "$color" ] && [ "$color" == "on" ] && [ -n "$query_color" ];
+		then
+				for vc in ${_valid_colors[@]}
+				do
+						if [ "$query_color" == "$vc" ];
+						then
+								_color=$query_color
+						fi
+				done;
 		fi
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
