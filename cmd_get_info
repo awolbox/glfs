@@ -7,29 +7,32 @@ cmd_get_info()
 		# Set color 
 		local _valid_colors=('red''green''yellow''blue''magenta''bold_red''bold_green''bold_yellow''bold_blue''bold_magenta')
 		local _color=$bold_red
+		_tidy() { cut -d "|" -f 2; }
 		
 		# No color
 		if [ "$DEFAULT" == "0" ] && [ -z "$color" ] || [ "$color" == "off" ]
 		then
-				 _color=''
+					_color=''
+		fi
 		
 		# User color
-		elif [ "$DEFAULT" == "0" ] && [ "$color" == "on" ] && [ -n "$query_color" ];
+		if [ "$DEFAULT" == "0" ] && [ "$color" == "on" ] && [ ! -z "$info_color" ];
 		then
-				for vc in ${_valid_colors[@]}
-				do
-						if [ "$query_color" == "$vc" ];
-						then
-								_color=$query_color
-						fi
-				done
+					for vc in ${_valid_colors[@]}
+					do
+							if [ "$query_color" == "$vc" ];
+							then
+									_color=$query_color
+							fi
+					done
+		fi
 		
 		# Redirect STDOUT when in in silent mode
-		elif [ "$QUIET" == "1" ];
+		if [ "$QUIET" == "1" ];
 		then
-					_tidy() { cut -d "|" -f 2 > ./SRCBUILD.INFO; }
+					tidy="_tidy > ./SRCBUILD.INFO"
 		else
-					_tidy(){ cut -d "|" -f 2 >&2; }
+					tidy="_tidy >&2"
 		fi
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
@@ -42,6 +45,6 @@ cmd_get_info()
 		|  ${srcurl}\n
 		|${_color}LICENSE${reset}\n
 		|  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
-		" | _tidy 
+		" | $tidy 
 }
 

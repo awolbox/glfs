@@ -54,7 +54,7 @@ source "cmd_makesrc"
 
 # Global options
 QUIET=0
-DEFAULT=0
+DEFAULT=1
 
 # Options
 short_options="c:si::x:hv"
