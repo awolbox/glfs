@@ -30,24 +30,24 @@ readonly bold_blue=${bold}${blue}
 readonly bold_magenta=${bold}${magenta}
 
 # ux
-_message() { [ $QUIET = 0 ] && echo -e "${bold_green} * ${reset} ${*}" >&2; }
-_warning() { [ $QUIET = 0 ] && echo -e "${bold_yellow} [W] ${reset} ${*}" >&2; }
-_error() { echo -e "$(basename $0): ${bold_red} [X] ${reset} ${*}" >&2; }
-_die() { _error ${@} && exit $_EX; }
+_message() { [ $QUIET = 0 ] && echo -e "${bold_green}*${reset} ${*}" >&2; }
+_warning() { [ $QUIET = 0 ] && echo -e "${bold_yellow}[W]${reset} ${*}" >&2; }
+_error() { [ $QUIET = 0 ] && echo -e "[$(basename $0)]-${bold_red}[X]:${reset} ${*}" >&2; }
+_die() { [ $QUIET = 0 ] && { _error ${@} exit $_EX; } || exit $_EX; }
 
-source _tmp_space
-source _version
-source _usage
-source _usage_error
-source _has_user_config
-source _has_keyring
-source _repositories
-source _read_SRCBUILD
-source _has_dependencies
-source _get_dependencies
-source _get_source
-source _source_verify
-source _source_extract
+source "_tmp_space"
+source "_version"
+source "_usage"
+source "_usage_error"
+source "_has_user_config"
+source "_has_keyring"
+source "_repositories"
+source "_read_SRCBUILD"
+source "_has_dependencies"
+source "_get_dependencies"
+source "_get_source"
+source "_source_verify"
+source "_source_extract"
 
 source get_info
 
@@ -73,21 +73,24 @@ DEBUG=0
 DEFAULT=0
 
 # Options
-small_opts="hvsq::c:x:"
-long_opts="help,version,silent,query::,config::,cc:"
-opts="$(getopt -o $small_opts -l $long_opts -n "$SRCBUILD" -- "$@")"
-return=$?
+small_options="hvsq::c:x:"
+long_options="help,version,silent,query::,config::,cc:"
+options="$(getopt -o $small_options -l $long_options -n "$SRCBUILD" -- "$@")"
 
-eval set -- "$opts"
-unset opts
+# No options
+[ -z $1 ] && { _usage_error; }
 
-if [ $return -ne 0 ];
+# Execution
+eval set -- "$options"
+unset options
+
+if [ $? -ne 0 ];
 then
 		_EX=$EX_DATAERR
 		_die "Fatal error in eval set"
 fi
 
-while [ $return -eq 0 ]
+while [ $? -eq 0 ]
 do
 		case "$1" in
 				'-c'|'--config') 
@@ -140,7 +143,8 @@ do
 						break
 						;;
 				*)
-					   	_usage_error
+						_usage_error
+						break
 						;;
 		esac
 done
@@ -150,6 +154,6 @@ then
 		cmd_makesrc
 fi
 
-exit $return
+exit $?
 
 
