@@ -1,0 +1,6 @@
+_usage_error()
+{
+		_EX=$EXIT_USAGE
+		_die "Invalid usage or command -- See '-h' or '--help' for more info"
+}
+

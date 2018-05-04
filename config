@@ -9,23 +9,24 @@ source_get=wget
 #makeflags=('-j 8')
 
 # use color
-color=y
+#color='on'
 
-# Color options - only valid if $color is set to y
+# Color options - only valid if '$color' is set to 'on'
 # possible values:
 #
-# 	red
-# 	green
-# 	yellow
-# 	megenta
-# 	bold_red
-# 	bold_green
-# 	bold_yellow
-# 	bold_blue
-# 	bold_magenta
+# 	$red
+# 	$green
+# 	$yellow
+# 	$blue
+# 	$megenta
+# 	$bold_red
+# 	$bold_green
+# 	$bold_yellow
+# 	$bold_blue
+# 	$bold_magenta
 #
 # color valus for --query  
-infocolor=$bold_yellow
+query_color=$bold_yellow
 
 ## TESTING ##
 # cc toolchain

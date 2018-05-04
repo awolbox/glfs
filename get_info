@@ -1,0 +1,38 @@
+# Send SRCBUILD information to STDOUT
+get_info()
+{
+		_has_user_config
+		_read_SRCBUILD
+		
+		# Set color 
+		local _valid_colors=('red''green''yellow''blue''magenta''bold_red''bold_green''bold_yellow''bold_blue''bold_magenta')
+		local _color=$bold_red
+		
+		if [ "$DEFAULT" == "1" ] && [ -z "$color" ] || [ "$color" == "off" ]
+		then
+				 _color=''
+		elif [ "$DEFAULT" == "1" ] && [ -n "$color" ] && [ "$color" == "on" ] && [ -n "$query_color" ];
+		then
+				for vc in ${_valid_colors[@]}
+				do
+						if [ "$query_color" == "$vc" ];
+						then
+								_color=$query_color
+						fi
+				done;
+		fi
+				
+		# Send various variable data to STDOUT (tidy it up a bit)
+		_tidy(){ cut -d "|" -f 2 >&2; }
+		echo -e "\
+		|${_color}SOURCE${reset}\n
+		|  ${srcname} - ${srcver}\n
+		|${_color}INFO${reset}\n
+		|  ${srcinfo}\n
+		|${_color}PROJECT HOME${reset}\n
+		|  ${srcurl}\n
+		|${_color}LICENSE${reset}\n
+		|  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		" | _tidy 
+}
+

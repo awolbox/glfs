@@ -10,13 +10,14 @@ DESCRIPTION
 	   ::
 
 NOTES
-       makesrc: build source-code using a SRCBUILD
-       SRCBUILD: a file containing special $vars that makesrc understands
-   
-       uses: echo, cat parted, tar
-       (nothing fancy, unfinished, needs mutch more work)
+       uses: echo, cat parted, tar, and more.
+       (nothing fancy, unfinished, needs more work!)
 
 OPTIONS
+	   -c, --config
+              If this option is set, then the absolute path to a valid config file must be specified WITHIN PARENTHESIS (ex. ""), Otherwise a fatal error will 
+			  occur and the program exits with a return value. If a config file is specified, all variables will be checked and if the config file is conside-
+			  red "valid", it will be used. If not the program exits with another fatal error.
 
 	   -h, --help
 		      Show help and usage information
@@ -28,10 +29,10 @@ OPTIONS
 			  Do not promt the user for anything. Automatically installs needed dependencies, also disables all output from STDOUT. In which case, one would have
 			  to check the return value -- ex. 'echo $?'. See EXIT STATUS for more info.
 
-	   -q, --query
+	   -i, --info
 			  Queries the SRCBUILD file inside of a working directory, then sends various information to STDOUT.
 
-	   -c, --cc
+	   -x, --cc
 			  Instructs makesrc to cross-compile a new working toolchain. See below.
 
    Cross-compilation toolchain options
@@ -61,17 +62,17 @@ ENVIRONMENT
        SOURCE_KEYRING
 
 EXIT STATUS
-       EX_OK
-       EX_USAGE
-       EX_UNAVAILABLE
-       EX_NOPERM
-       EX_DATAERR
-       EX_NOHOST
-       EX_CANTCREAT
+       EXIT_OK
+       EXIT_USAGE
+       EXIT_UNAVAILABLE
+       EXIT_NOPERM
+       EXIT_DATAERR
+       EXIT_NOHOST
+       EXIT_CANTCREATE
 
 AUTHOR
        awol <awol@member.fsf.org>
 
 SEE ALSO
-       gnu/linux "from-scratch" <https://linuxfromscratch.org>
+       gnu/linux "from-scratch" <https://linuxfromscratch.org>, gnu <https://gnu.org>, fsf <https://fsf.org>
 

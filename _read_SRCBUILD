@@ -1,0 +1,13 @@
+# Parse/Source SRCBUILD $vars
+_read_SRCBUILD()
+{
+		# Sanity checks
+		if [ -f "./SRCBUILD" ] && [ -O "./SRCBUILD" ];
+		then
+				source ./SRCBUILD
+		else
+				_EX=$EX_UNAVAILABLE
+				_die "Fatal error in SRCBUILD"
+		fi
+}
+

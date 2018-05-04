@@ -1,0 +1,12 @@
+_has_keyring()
+{
+		typeset -a keyring
+		keyring=$HOME/.gnupg/'source.keys'
+
+		[ -z $SOURCE_KEYRING ] &&
+		{
+				_warning "No valid sourceman keyrings found."; return 1
+				wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=$SOURCE_DIR;
+		}
+}
+

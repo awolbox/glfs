@@ -1,0 +1,7 @@
+_version()
+{
+		echo -e "\
+		;$(basename $0) $VERSION - build source using a SRCBUILD file.\
+		" | cut -d ";" -f 2
+}
+
