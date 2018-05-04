@@ -1,10 +1,19 @@
 # Check to see if building source requires dependencies
 _has_dependencies()
 {
-		for n in ${depends[*]}
-		do
-				[ -d $SOURCE_DIR/$n ] && { [ -e $SOURCE_ARCHIVE ] || [ -f $SRCBUILD ] && return 0; } \
-						|| { _warning "There are dependencies needed to build source"; return 1; }
-		done
+		if [ -n "${depends}" ];
+		then
+				for ref in ${depends[*]}
+				do
+						# If source directory references dependency
+						if [ -d "${SOURCE_DIR}/${ref}" ];
+						then
+								# Check for valid $SOURCE_ARCHIVE or SRCBUILD in reference
+								[ -e "$SOURCE_ARCHIVE" ] && [ -f "$SRCBUILD" ] && : #
+						else
+								_warning "There are dependencies needed to build source"; return 1
+						fi
+				done
+		fi
 }
 
