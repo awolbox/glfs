@@ -57,8 +57,8 @@ QUIET=0
 DEFAULT=1
 
 # Options
-short_options="c:si::x:hv"
-long_options="config:,silent,info::,cc:,help,version,dev::,mount::,"
+short_options="c:i::hl:m:svx"
+long_options="config=:,cc:,info::,help,label=:,mounts:,silent,version,"
 options=$(getopt -o $short_options -l $long_options -n "$SRCBUILD" -- "$@")
 return=$?
 
@@ -82,7 +82,7 @@ while :
 do
 		case "$1" 
 		in
-				'-c'|'--config') MAKESRC_USER_CONFIG="$2"; shift 2; continue ;;
+				'-c'|'--config=') MAKESRC_USER_CONFIG="$2"; shift 2; continue ;;
 				'-s'|'--silent') QUIET=1; shift 2; continue ;;
 				'-i'|'--info') case "$2"
 							   in
@@ -90,7 +90,11 @@ do
 										*) cmd_get_info ;;
 							   esac
 							   shift 2; break ;;
-				'-x'|'--cc') :; shift; continue ;;
+				'--cc') case "$2" in 
+							 	'-l'| --label=) : ;; #
+								*) : ;;	# arguments required
+					 	esac
+						shift; continue ;;
 				'-h'|'--help') _usage; break ;;
 				'-v'|'--version') _version; break ;;
 				'--') shift; break ;;

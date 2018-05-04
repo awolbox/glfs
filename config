@@ -9,7 +9,7 @@ source_get=wget
 #makeflags=('-j 8')
 
 # use color
-color='on'
+color='off'
 
 # Color options - only valid if '$color' is set to 'on'
 # possible values:

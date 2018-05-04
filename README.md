@@ -37,7 +37,7 @@ uses: echo, cat parted, tar, and more.
 
 -s, \--silent
 :	Do not promt the user for anything. Automatically installs needed dependencies, also disables all output from *stdout*.
-	In which case, one would have to check the return value (ex. 'echo $?'). See *EXIT STATUS* for more information.
+	In which case, one would have to check the return value (example: $ echo \$? $). See *EXIT STATUS* for more information.
 
 -i, \--info
 :	Queries the *SRCBUILD* file inside of the working directory, then sends various information to *stdout*.
@@ -48,14 +48,14 @@ uses: echo, cat parted, tar, and more.
 # CC_TOOLCHAIN OPTIONS
 
 \--label *LABEL*
-:	*LABEL* equals the device *label* name (ex, /dev/disk/by-label) to build upon.
+:	*LABEL* equals the device *label* name (*/dev/disk/by-label*) to build upon.
 
 \--mount *DIR*
 :	*DIR* is the *absolute* path to the device mounted on the host system.
 
 \--wipe *WIPE*
 :	Over-write *LABEL* before use, using *WIPE* options. Valid *WIPE* options include: *0* - zeros, *1* - random data, or both, 
-	one after the other (ex. *01*).
+	one after the other (example: $ makesrc --cc --wipe="*01*").
 
 \--boot *BOOT*
 :	Sets a boot flag type for new *CC_TOOLCHAIN*. *BOOT* Values can be either *mbr* for mbr/gpt boot, and *uefi* for efi/gpt.
@@ -65,7 +65,7 @@ uses: echo, cat parted, tar, and more.
 
 \--tgt-name *TGT_NAME*
 :	Sets a new target name for *CC_TOOLCHAIN*. This is needed, but not necessary for the user to do, as this will default to
-	'cc-linux-gnu'. All *TGT_NAME* names will be prefixed by system architecture (ex, x86_64-). You will not need to Know this,
+	'cc-linux-gnu'. All *TGT_NAME* names will be prefixed by system architecture ($uname -u$). You will not need to Know this,
 	and you will not need to set this manually, but you can.
 
 \--cc-name *CC_TOOLCHAIN_NAME*
