@@ -1,12 +1,25 @@
+# Check for a valid keyring to verify source gpg signatures.
 _has_keyring()
 {
-		typeset -a keyring
-		keyring=$HOME/.gnupg/'source.keys'
-
-		[ -z $SOURCE_KEYRING ] &&
+		_check_keyring()
 		{
-				_warning "No valid sourceman keyrings found."; return 1
-				wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=$SOURCE_DIR;
-		}
-}
+				typeset -a keyring
+				KEYRING=${SOURCE_DIR}/gnu-keyring.gpg
 
+				if [ ! -e $keyring ];
+				then
+							_warning "No valid source keyrings found."
+							return 1
+				else
+							return 0
+				fi
+		}
+
+		_check_keyring
+
+		# If not found, get one.
+		if [ "$?" == "1" ];
+		then
+					wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=${SOURCE_DIR}
+		fi
+}

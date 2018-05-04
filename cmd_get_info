@@ -8,10 +8,13 @@ cmd_get_info()
 		local _valid_colors=('red''green''yellow''blue''magenta''bold_red''bold_green''bold_yellow''bold_blue''bold_magenta')
 		local _color=$bold_red
 		
-		if [ "$DEFAULT" == "1" ] && [ -z "$color" ] || [ "$color" == "off" ]
+		# No color
+		if [ "$DEFAULT" == "0" ] && [ -z "$color" ] || [ "$color" == "off" ]
 		then
 				 _color=''
-		elif [ "$DEFAULT" == "1" ] && [ -n "$color" ] && [ "$color" == "on" ] && [ -n "$query_color" ];
+		
+		# User color
+		elif [ "$DEFAULT" == "0" ] && [ "$color" == "on" ] && [ -n "$query_color" ];
 		then
 				for vc in ${_valid_colors[@]}
 				do
@@ -19,11 +22,17 @@ cmd_get_info()
 						then
 								_color=$query_color
 						fi
-				done;
+				done
+		
+		# Redirect STDOUT when in in silent mode
+		elif [ "$QUIET" == "1" ];
+		then
+					_tidy() { cut -d "|" -f 2 > ./SRCBUILD.INFO; }
+		else
+					_tidy(){ cut -d "|" -f 2 >&2; }
 		fi
 				
 		# Send various variable data to STDOUT (tidy it up a bit)
-		_tidy(){ cut -d "|" -f 2 >&2; }
 		echo -e "\
 		|${_color}SOURCE${reset}\n
 		|  ${srcname} - ${srcver}\n
