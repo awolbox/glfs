@@ -1,9 +1,5 @@
 #!/usr/bin/bash
 
-readonly SOURCEBUILD_CONFIG=${SRCBUILD_USER_CONF:-${HOME}/.config/srcman/makesrc.conf}
-readonly SOURCEBUILD_KEYRING=${SRCBUILD_USER_KEYS:-${HOME}/.gnupg/source.keys}
-readonly SOURCEBUILD_DIR=
-
 readonly VERSION='2.0'
 
 # exit codes 
@@ -68,9 +64,15 @@ _usage_error()
 }
 
 # Check to see if a user configuration was provided
-_has_userconf()
+_has_user_config()
 { 
-	command -v $SRCBUILD_CONFIG >&2 /dev/null && { DEFAULT=1; }
+		if [ $DEFAULT -ne 0 ];
+		then
+				
+				source "${MAKESRC_USER_CONFIG}"
+		else
+				return 0
+		fi
 }
 
 _has_keyring()
@@ -257,8 +259,8 @@ DEBUG=0
 DEFAULT=0
 
 # Options
-small_opts="hvsq::ac:"
-long_opts="help,version,silent,query::,cc:"
+small_opts="hvsq::c::x:"
+long_opts="help,version,silent,query::,config::,cc:"
 opts="$(getopt -o $small_opts -l $long_opts -n "$SRCBUILD" -- "$@")"
 return=$?
 
@@ -268,6 +270,50 @@ unset opts
 while [ $return -eq 0 ]
 do
 		case "$1" in
+				'-c'|'--config')
+						case "$2" in
+								'')
+										_EX=$EX_USAGE; _die "Fatal error - no valid config file specified"
+										;;
+								*)
+										MAKESRC_USER_CONFIG="$2"
+										DEFAULT=1
+										;;
+						esac
+						shift 2
+						continue
+						;;
+				'-s'|'--silent') 
+						QUIET=1
+						shift 2
+						continue
+						;;
+				'-q'|'--query')
+						case $2 in
+								# long option - show more info (TODO)
+								'-a'|'--all')
+										:
+										:#_has_user_config
+									    :#_read_srcbuild
+									    :#_srcbuild_info_long	
+										;;
+								
+								*)
+										_has_user_config
+										_read_srcbuild
+										srcbuild_info
+										;;
+						esac
+						shift 2
+						break
+						;;
+				'-x'|'--cc')
+						:
+						: # cross-compiler options
+						:
+						shift
+						continue
+						;;
 				'-h'|'--help') 
 						_usage
 						break
@@ -276,30 +322,6 @@ do
 						_version
 						break
 						;;
-				'-s'|'--silent') 
-						[ QUIET=1 ]; shift 2; continue
-						;;
-				'-q'|'--query')
-						case $2 in
-								'-a'|'--all')
-										: # long query
-										;;
-								
-								*)
-										_read_srcbuild
-										srcbuild_info
-										;;
-						esac
-						shift 2
-						continue
-						;;
-				'-c'|'--cc')
-						:
-						: # cross-compiler options
-						:
-						shift
-						continue
-						;;
 				'--') 
 						shift
 						break
@@ -307,7 +329,7 @@ do
 				*)
 					   	_usage_error
 						;;
-		esac 
+		esac
 done
 
 [ $return -ne 0 ] && { EX=$EX_DATAERR; _die "Fatal error in eval set"; }
