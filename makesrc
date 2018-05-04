@@ -49,22 +49,8 @@ source "_get_source"
 source "_source_verify"
 source "_source_extract"
 
-source get_info
-
-# Make/Build source
-makesrc() 
-{ 
-				
-		[ $EUID -ne 0 ] && { exit $EX_NOPERM; }
-				
-		_read_SRCBUILD
-		_has_keyring
-	 	_has_needed_dependencies
-		
-		# cross-compilation toolchian
-
-		# _source_tarball
-}
+source "cmd_get_info"
+source "cmd_makesrc"
 
 # Global options
 VERBOSE=0
@@ -113,11 +99,11 @@ do
 						case "$2" in
 								# long option - show more info
 								'-a'|'--all')
-									    :#get_info_long	
+									    :#cmd_get_info_long	
 										;;
 								
 								*)
-										get_info
+										cmd_get_info
 										;;
 						esac
 						shift 2
@@ -151,7 +137,7 @@ done
 
 if [ "$SRCBUILD" == "SRCBUILD" ];
 then
-		cmd_makesrc
+		makesrc
 fi
 
 exit $?
