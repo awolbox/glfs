@@ -10,9 +10,9 @@ INFO:
 
 INDEX:
 ------
-
-		- 'makesrc' is the executable used for testing
+		
 		- 'build.sh' will "compile" all neccessary files into one executable "script"
+		- 'makesrc' is the executable used for testing
 		- 'makesrc.1.md' raw man page
 TODO:
 -----
@@ -51,6 +51,6 @@ NOTES:
 ------
 	
 	- All code is broken up into individual files
-	- the files "_var" and "_functions" are native-only
+	- the files "vars" and "functions" are native
 
 

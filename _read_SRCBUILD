@@ -2,6 +2,13 @@
 _read_SRCBUILD()
 {
 		# Sanity checks
+		local parse=($@)
+		
+		for all in $(ls .)
+		do
+				: # If tooo many
+		done
+
 		if [ -f "./SRCBUILD" ] && [ -O "./SRCBUILD" ];
 		then
 				source ./SRCBUILD
