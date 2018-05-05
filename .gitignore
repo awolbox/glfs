@@ -1,6 +1,7 @@
 src/*
 !src/**/SRCBUILD
 !src/SRCBUILD
+!src/*.gpg
 tst.*
 *.CHANGELOG
 *LOGIC
