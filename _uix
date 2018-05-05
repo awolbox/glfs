@@ -1,0 +1,6 @@
+# uix
+_message() { [ $QUIET = 0 ] && echo -e "${bold_green} * ${reset}${*}" >&2; }
+_warning() { [ $QUIET = 0 ] && echo -e "${bold_yellow} [W] ${reset}${*}" >&2; }
+_error() { [ $QUIET = 0 ] && echo -e "${bold_red} [X] ${reset}${*}" >&2; }
+_die() { [ $QUIET = 0 ] && { _error "Fatal error - ${@}" && exit $_EX; } || exit $_EX; }
+
