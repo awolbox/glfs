@@ -26,7 +26,7 @@ color='on'
 # 	$bold_magenta
 #
 # color valus for --query  
-info_color=$green
+info_color=$red
 
 # Cc toolchain options
 #target_build_device=

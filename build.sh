@@ -3,34 +3,29 @@ _executive_=makesrc.sh
 
 readonly torn_executive="$(printf '%s\n' "_$executive_" | cut -d "." -f 1)"
 
-
-handle_vars()
+_functions()
 {
+		typeset -a all
 		all=($@)
-		while read line
+		
+		while read -r line
 		do
-				for line in "$all"
+				for $line in "$all"
 				do
-		done <-""
-}
-handle_functions
-
-# Handle the order of operations
-ooo()
-{
-		:
+						:# Find function name in line
+						 # Grab it
+						 # Cat it into $torn_executive
+				done
+		done < "vars"
 }
 
-z=($@)
-for y in $(ls .)
+# Check current working directory for special files
+# The $@ represents all possible files
+for file in $(ls .)
 do
-		case "$z" in
+		case "$file" in
 				'vars') :; shift ;;
 				'functions') :; shift ;;
-				"_${y}") ooo; break ;;
 				*) :; break ;;
 		esac
-		
-		# defaults
-		#cat ./_* >> .${script}
 done
