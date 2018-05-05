@@ -1,8 +1,20 @@
 #!/bin/bash
+_executive_=makesrc.sh
 
-readonly script='.makesrc.sh'
+readonly torn_executive="$(printf '%s\n' "_$executive_" | cut -d "." -f 1)"
 
-# Environment 
-cat makesrc | head -n $(cat makesrc | grep -n "FILE DELIMETER" | cut -d ":" -f 1) > $script
+# Handle vars
+# Handle functions
 
-#
+z=($@)
+for y in $(ls .)
+do
+		case "$z" in
+				'vars') :; shift ;;
+				'functions') :; shift ;;
+				*) :; break ;;
+		esac
+		
+		# defaults
+		#cat ./_* >> .${script}
+done

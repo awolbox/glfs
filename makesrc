@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 
-source "_vars"
-source "_functions"
+source "vars"
+source "functions"
 
 # Global options
 QUIET=0
 DEFAULT=1
 
-# Options
+# Get options
 short_options="c:i::hl:m:svx"
 long_options="config=:,cc:,info::,help,label=:,mounts:,silent,version,"
 options=$(getopt -o $short_options -l $long_options -n "$SRCBUILD" -- "$@")
 return=$?
 
-# Handle option error
+# Unable to get options
 if [ $return -ne 0 ]
 then
-		_EX=$EXIT_CANTCREATE; _die "getopt exit - ${return}"
+		_EX=$EXIT_CANTCREATE; _die "getopt return - ${return}"
 fi
 
+# No options supplied
 if [ -z $1 ]
 then
 		_usage_error
@@ -27,7 +28,6 @@ fi
 # Execution
 eval set -- "$options"
 unset options
-
 
 while :
 do
@@ -55,7 +55,7 @@ done
 
 if [ "$SRCBUILD" == "SRCBUILD" ];
 then
-		makesrc
+		_cmd_makesrc
 fi
 
 exit $?
