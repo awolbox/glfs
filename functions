@@ -11,6 +11,6 @@ source "_get_dependencies"
 source "_get_source"
 source "_source_verify"
 source "_source_extract"
-source "cmd_get_info"
-source "cmd_makesrc"
+source "_cmd_get_info"
+source "_cmd_makesrc"
 
