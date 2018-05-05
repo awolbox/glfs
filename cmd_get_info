@@ -5,7 +5,7 @@ cmd_get_info()
 		_read_SRCBUILD
 		
 		# Set color 
-		local _valid_colors=('red''green''yellow''blue''magenta''bold_red''bold_green''bold_yellow''bold_blue''bold_magenta')
+		local valid_colors=('$red' '$green' '$yellow' '$blue' '$magenta' '$bold_red' '$bold_green' '$bold_yellow' '$bold_blue' '$bold_magenta')
 		local _color=$bold_red
 		_tidy() { cut -d "|" -f 2; }
 		
@@ -16,13 +16,13 @@ cmd_get_info()
 		fi
 		
 		# User color
-		if [ "$DEFAULT" == "0" ] && [ "$color" == "on" ] && [ ! -z "$info_color" ];
+		if [ "$DEFAULT" == "0" ] && [ -n "$color" ] && [ "$color" == "on" ] && [ -n "$info_color" ]
 		then
-					for vc in ${_valid_colors[@]}
+					for vc in "${valid_colors[@]}"
 					do
-							if [ "$query_color" == "$vc" ];
+							if [ "$info_color" == "$vc" ];
 							then
-									_color=$query_color
+									_color=$info_color
 							fi
 					done
 		fi
