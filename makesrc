@@ -1,6 +1,317 @@
 #!/usr/bin/bash
-source vars
-source functions
+readonly VERSION='2.0'
+
+# exit codes 
+readonly EXIT_OK='0'				# completed without error
+readonly EXIT_USAGE='64'			# error - general command line usage error 
+readonly EXIT_DATAERROR='65'		# error - corrupt data (.sig, checksums, etc.)
+readonly EXIT_NOHOST='68'			# error - source get failed
+readonly EXIT_UNAVAILABLE='69'		# error - improper input - (SRCBUILD not found)
+readonly EXIT_NOPERM='70'			# error - improper permissions - (root permissions needed)
+readonly EXIT_CANTCREATE='73'		# error - makesrc failed - cannot build source
+
+# permissions/security
+readonly _UID="$(id -u "$USER")"
+readonly _GID="$(id -g "$USER")"
+
+# color values
+readonly bold='\e[1m'
+readonly reset='\e[0m'
+readonly red='\e[31m'
+readonly green='\e[32m'
+readonly yellow='\e[33m'
+readonly blue='\e[34m'
+readonly magenta='\e[35m'
+readonly bold_red=${bold}${red}
+readonly bold_green=${bold}${green}
+readonly bold_yellow=${bold}${yellow}
+readonly bold_blue=${bold}${blue}
+readonly bold_magenta=${bold}${magenta}
+
+# Provide a random space in shared memory
+_tmp_space()
+{ 
+        local tmpf
+        tmpfile
+
+        tmpf="$(mktemp -u "$SECURE_TMPDIR/XXXXXXXXXXXXXXXXXXXX")"
+
+        umask 066
+        [ $? -eq 0 ] || _EX=$EX_NOPERM; _die "Fatal error setting permission umask for temporary files."                                                                          
+        [ -r "$tmpf" ] && _EX=$EX_DATAERR; _die "Fatal error, someone may be trying to highjack temporary files."                                                                 
+
+        touch "$tmpf"
+        [ $? -eq 0 ] && _EX=$EX_USAGE; _die "Fatal error creating temporary files"
+
+        TMP=${tmpf}
+        return 0
+}
+
+_version()
+{
+		echo -e "\
+		;$(basename $0) $VERSION - build source using a SRCBUILD file.\
+		" | cut -d ";" -f 2
+}
+
+_usage()
+{
+		_version
+		echo "
+		|Usage:
+		|   $(basename $0) [Options]... SRCBUILD
+        |
+        |Options:
+		|   -h, --help      display this help screen
+		|   -v, --version   show version information
+		|   -c, --config    specify path to an alternative config
+		|   -s, --silent    do not prompt the user
+        |   -i, --info      read SRCBUILD information
+		|   -x, --cc        cross-compilation-toolchain options
+		|       --disk      ::
+		|       --mount     ::
+		|       --boot      ::
+		|       --parts     ::
+		|       --tgt-name  ::
+		|	 
+		|Author: awol <awol@member.fsf.org>\
+		" | cut -d "|" -f 2 >&2
+}
+
+_usage_error()
+{
+		_EX=$EXIT_USAGE
+		_die "invalid usage or command (See '-h' or '--help' for more info)"
+}
+
+# Check to see if a user configuration was provided
+_has_user_config()
+{ 
+		if [ ! -z "$MAKESRC_USER_CONFIG" ];
+		then
+					source "$MAKESRC_USER_CONFIG"
+					DEFAULT=0
+					return 0
+		else
+					return 1
+		fi
+}
+
+# Check for a valid keyring to verify source gpg signatures.
+_has_keyring()
+{
+		_check_keyring()
+		{
+				#typeset -a KEYRING
+				KEYRING=${SOURCE_DIR}/gnu-keyring.gpg
+
+				if [ ! -e "$KEYRING" ];
+				then
+							_warning "No valid source keyrings found."
+							return 1
+				else
+							return 0
+				fi
+		}
+
+		_check_keyring
+
+		# If not found, get one.
+		if [ "$?" == "1" ];
+		then
+					wget "https://ftp.gnu.org/gnu/gnu-keyring.gpg" --directory-prefix=${SOURCE_DIR}
+		fi
+}
+# Source repositories (much more work needs done for this (don't know if i want it))
+_repositories() 
+{ 
+		:
+		#gnu_repo='https://ftp.gnu.org/gnu'
+		#savannah_repo=''	
+}
+
+# Parse/Source SRCBUILD $vars
+_read_SRCBUILD()
+{
+		# Sanity checks
+		local parse=($@)
+		
+		for all in $(ls .)
+		do
+				: # If tooo many
+		done
+
+		if [ -f "./SRCBUILD" ] && [ -O "./SRCBUILD" ];
+		then
+				source ./SRCBUILD
+		else
+				_EX=$EXIT_UNAVAILABLE
+				_die "invalid SRCBUILD"
+		fi
+}
+
+# Check to see if building source requires dependencies
+_has_dependencies()
+{
+		if [ -n "${depends}" ];
+		then
+				for ref in ${depends[*]}
+				do
+						# If source directory references dependency
+						if [ -d "${SOURCE_DIR}/${ref}" ];
+						then
+								# Check for valid $SOURCE_ARCHIVE or SRCBUILD in reference
+								[ -e "$SOURCE_ARCHIVE" ] && [ -f "$SRCBUILD" ] && : #
+						else
+								_warning "There are dependencies needed to build source"; return 1
+						fi
+				done
+		fi
+}
+
+# Get needed dependencies for source
+_get_dependencies() 
+{ 
+		resolve_depends()
+		{
+				for x in ${depends[@]}
+				do
+						:
+				done
+		}
+
+		if [ $QUIET -eq 1 ];
+		then
+				local depends_count=$(echo "${depends[*]}" | wc -w)
+				echo
+				cat <<-_EOF
+						${_color}Dependencies${reset}($depends_count)${_color}:${reset}
+				
+							${depends[*]}
+				
+				${_color}Install?:${reset}
+				_EOF
+				read u
+				case $u in
+						'y'|'Y'|'yes'|'Yes'|'YES') resolve_depends ;;
+						'n'|'N'|'no'|'No'|'NO') return $EX_USAGE ;;
+				esac;
+		else
+				resolve_depends
+		fi
+}
+
+# Get source from repository
+_get_source()
+{
+		if [ "$source_get" == "wget" ];
+		then
+				wget $srcget --directory-prefix=$SOURCE_DIR/$srcname
+				wget $srcsig --directory-prefix=$SOURCE_DIR/$srcname
+		elif [ "$source_get" == "curl" ];
+		then
+				:
+		fi
+}
+
+# Verify source signature using keyring
+_source_verify()
+{
+		# Send verification to shared memory then send to STDOUT
+		gpg --no-default-key --keyring=$SOURCE_KEYRING --verify ${srcname}.sig >2& \
+				$TMP && cat $TMP | grep "GOOD"
+		
+		# Fatal error - should be handled
+		if [ $? -eq 0 ];
+		then
+				return 0;									
+		else
+				_EX=$EX_DATAERR; _die "Fatal error - source verification failure"
+		fi
+}
+
+# Extract source tarball (more support for other filetypes later)
+_source_extract() 
+{
+		v=$(ls . | grep ".tar" | grep -v ".sig")
+		w=$(echo "$(${v})" | cut -d "." -f 4)
+		
+		if [ "$w" == "xz" ] || [ "$w" == "gz" ];
+		then
+				tar xzvf $(${v})
+		elif [ "$w" == "bz2" ];
+		then
+				tar xzvf $(${v})
+		else
+				echo "MORE WORK NEEDS TO BE DONE IN THIS PROGRAM IN ORDER\n TO SUPPORT THE FOLLOWING \
+						FILE TYPE: $(${w})\n"
+				exit $EX_UNAVAILABLE
+		fi
+}
+
+# Send SRCBUILD information to STDOUT
+cmd_get_info()
+{
+		_has_user_config
+		_read_SRCBUILD
+		
+		# Set color 
+		local valid_colors=('$red' '$green' '$yellow' '$blue' '$magenta' '$bold_red' '$bold_green' '$bold_yellow' '$bold_blue' '$bold_magenta')
+		local _color=$bold_red
+		_tidy() { cut -d "|" -f 2; }
+		
+		# No color
+		if [ "$DEFAULT" == "0" ] && [ -z "$color" ] || [ "$color" == "off" ]
+		then
+					_color=''
+		fi
+		
+		# User color
+		if [ "$DEFAULT" == "0" ] && [ -n "$color" ] && [ "$color" == "on" ] && [ -n "$info_color" ]
+		then
+					for vc in "${valid_colors[@]}"
+					do
+							if [ "$info_color" == "$vc" ];
+							then
+									_color=$info_color
+							fi
+					done
+		fi
+		
+		# Redirect STDOUT when in in silent mode
+		if [ "$QUIET" == "1" ];
+		then
+					tidy="_tidy > ./SRCBUILD.INFO"
+		else
+					tidy="_tidy >&2"
+		fi
+				
+		# Send various variable data to STDOUT (tidy it up a bit)
+		echo -e "\
+		|${_color}SOURCE${reset}\n
+		|  ${srcname} - ${srcver}\n
+		|${_color}INFO${reset}\n
+		|  ${srcinfo}\n
+		|${_color}PROJECT HOME${reset}\n
+		|  ${srcurl}\n
+		|${_color}LICENSE${reset}\n
+		|  ${_color}This project is licenced under the following:${reset} ${srccpy[*]}
+		" | $tidy 
+}
+
+# Make/Build source
+makesrc() 
+{ 
+		[ $EUID -ne 0 ] && { _EX=$EXIT_NOPERM; _die "not root"; }
+				
+		# Cross-compilation-toolchian options
+		_has_keyring
+		_read_SRCBUILD
+		_has_needed_dependencies
+		
+		# Source tarball
+
+}
 
 # Global options
 QUIET=0

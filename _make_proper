@@ -1,7 +1,0 @@
-# Set permission/ownership values to source/file
-_set_proper() 
-{ 
-        local path=
-        chown -R ${_UID}:${GID} ${path} || _EX=$EX_NOPERM; _die "unable to set proper ownership permissions of ${path}"                                                           
-        chmod 0711 ${path} || _EX=$EX_NOPERM; _die "unable to set proper permissions of ${path}"                                                                                  
-}
