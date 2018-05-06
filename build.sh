@@ -20,6 +20,12 @@ _functions()
 		do
 				cat $(cut -d " " -f 2) > .funcs
 		done < functions
+		if [ $? -ne 0 ];
+		then
+				return 1
+		else
+				return 0
+		fi
 }
 
 # Return values handled
