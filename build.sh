@@ -36,18 +36,15 @@ _returns()
 }
 
 # Special files handled
-# The $@ represents all "special" files
-special_files=($@)
-rawman=${exe}.md.1
 self=$(basename $0)
 _special()
 {
 		local found
-		for found in ${special_files[@]}
+		for found in ${all_files[@]}
 		do
 				case "$found" in
-						"$rawman") rm $rawman || return 1 ;;
-						"$self" ) rm $self || return 1 ;;
+						"$rawman") rm "$rawman" || return 1 ;;
+						"$self" ) rm "$self" || return 1 ;;
 				esac
 		done
 }
@@ -59,7 +56,7 @@ _sweep()
 		sed -i '1,4 d' $exe
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
-		#rm ./_*; rm vars functions
+		rm ./_*; rm vars functions
 		[ $? -eq 0 ] && _special
 }
 
