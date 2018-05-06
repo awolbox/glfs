@@ -13,7 +13,7 @@ _functions()
 {
 		while read line
 		do
-				cat $(cut -d '"' -f 2) > ./.functions
+				cat $(cut -d '"' -f 2) > .vars
 		done < functions
 }
 
@@ -32,10 +32,11 @@ _returns()
 
 _finish()
 {
-		cat .functions >> .vars && rm .functions
-		sed -i '1,4 d' "$exe"
+		#cat .funcs >> .vars && rm .funcs
+		sed -i '1,4 d' $exe
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
+		#rm ./_*
 }
 
 all_files=( $(ls .) )
@@ -45,6 +46,8 @@ do
 				vars) _vars; _returns ;;
 				functions) _functions; _returns ;;
 		esac
-		_finish; _returns
 done
+
+[ $? -eq 0 ] && { _finish; _returns; }
 exit $?
+
