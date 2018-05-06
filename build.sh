@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#
+# This script will self destruct
+#
+
 exe=makesrc
 rawman=${exe}.1.md
 
@@ -14,7 +18,7 @@ _functions()
 {
 		while read line
 		do
-				cat $(cut -d '"' -f 2) > .funcs
+				cat $(cut -d " " -f 2) > .funcs
 		done < functions
 }
 
@@ -31,16 +35,35 @@ _returns()
 		fi
 }
 
-_finish()
+# Special files handled
+# The $@ represents all "special" files
+special_files=($@)
+rawman=${exe}.md.1
+self=$(basename $0)
+_special()
+{
+		local found
+		for found in ${special_files[@]}
+		do
+				case "$found" in
+						"$rawman") rm $rawman || return 1 ;;
+						"$self" ) rm $self || return 1 ;;
+				esac
+		done
+}
+
+# Finish him
+_sweep()
 {
 		cat .funcs >> .vars && rm .funcs
 		sed -i '1,4 d' $exe
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
-		rm ./_*; rm vars functions
-		rm $rawman
+		#rm ./_*; rm vars functions
+		[ $? -eq 0 ] && _special
 }
 
+# "Compile"
 all_files=( $(ls .) )
 for n_file in ${all_files[@]}
 do
@@ -50,6 +73,6 @@ do
 		esac
 done
 
-[ $? -eq 0 ] && { _finish; _returns; }
+[ $? -eq 0 ] && { _sweep; }
 exit $?
 
