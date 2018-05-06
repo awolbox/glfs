@@ -13,7 +13,7 @@ _functions()
 {
 		while read line
 		do
-				cat $(cut -d '"' -f 2) > .vars
+				cat $(cut -d '"' -f 2) > .funcs
 		done < functions
 }
 
@@ -32,7 +32,7 @@ _returns()
 
 _finish()
 {
-		#cat .funcs >> .vars && rm .funcs
+		cat .funcs >> .vars && rm .funcs
 		sed -i '1,4 d' $exe
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
