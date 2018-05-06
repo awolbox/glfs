@@ -36,7 +36,7 @@ _finish()
 		sed -i '1,4 d' $exe
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
-		#rm ./_*
+		rm ./_*; rm vars functions
 }
 
 all_files=( $(ls .) )
