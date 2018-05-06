@@ -1,66 +1,60 @@
 #!/bin/bash
 
-_executive_=makesrc.sh
-readonly torn_executive="$(printf '%s\n' "_$executive_" | cut -d "." -f 1)"
+executive='makesrc.sh'
+readonly torn_executive="$(printf '%s\n' "${executive}" | cut -d "." -f 1)"
 readonly script=".${torn_executive}"
 
-# Special files handled
+# Native files handled
 _vars()
 {
-		# First in ${torn_executive}
-		if [ -f "vars" ];
-		then
-				# If vars exists, make $torn_execuitive
-				touch $script; chmod 600 $script || return 1
+		# Start if 'vars' exists
+		touch -v "${script}" && chmod 600 "${script}" || return 1
 				
-				# If $torn_executive exists send vars
-				# thus starting the "compilation"
-				[ $? -eq 0 ] cat "vars" > ${script} || return 1
-		else
-				return 1
-		fi
+		# If $torn_executive exists, cat 'vars' to $script, thus starting "compilation"
+		cat 'vars' > "${script}" && rm -v 'vars' || return 1
 }
 
 _functions()
 {
-		typeset -a all
-		all=($@)
+		local line
 		
 		while read -r line
 		do
-				for "$line" in "${all[@]}"
-				do
-						cat $(cut -d '"' -f 2) >> ${script} || return 1
-				done
-		done < "functions"
+				cat $(cat ${line} | cut -d '"' -f 2) >> ${script} || return 1
+		done < 'functions'
+
+		cat "${torn_executive}" >> "${script}" && rm -v "${torn_executive}" || return 1
 }
 
-# Handle function return values
-_handle()
+# Return values handled
+_returns()
 {
-		local return=$?
-		
-		if [ "$?" ];
-		then
-				case "$return" in 
-						'0') return 0; break ;;
+		ret=$?
+		while [ $? -ne 0 ]
+		do
+				case "$ret" in 
 						'1') exit 1; break ;;
 				esac
-		fi
+		done
 }
 
-
+# Clean up
+_sweep()
+{
+		mv -v ${script} ${executive}
+		chmod 700 ${executive}
+		rm -v ./*_
+}
 
 # Check current working directory for special files
-for file in $(ls .)
+files=$(ls .)
+for file in "$files"
 do
 		case "$file" in
-				'vars') _vars; _handle; shift ;;
-				'functions') _functions; _handle; shift ;;
-				'--') shift; break ;;
-				*) exit 1; break ;;
-		esac
+				'vars') _vars; _returns ;;
+				'functions') _functions; _returns ;;
+				"${special[@]}") : ;;
+		esac; _finish
 done
-
 exit $?
 
