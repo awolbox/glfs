@@ -1,6 +1,7 @@
 #!/bin/bash
 
 exe=makesrc
+rawman=${exe}.1.md
 
 # Native files handled
 _vars()
@@ -37,6 +38,7 @@ _finish()
 		cat $exe >> .vars && rm $exe
 		mv .vars $exe && chmod +x $exe 
 		rm ./_*; rm vars functions
+		rm $rawman
 }
 
 all_files=( $(ls .) )
