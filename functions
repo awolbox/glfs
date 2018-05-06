@@ -1,4 +1,4 @@
-source "_uix"
+source "_ui"
 source "_tmp_space"
 source "_version"
 source "_usage"
