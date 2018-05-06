@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
-
-source "vars"
-source "functions"
+#!/usr/bin/bash
+source vars
+source functions
 
 # Global options
 QUIET=0

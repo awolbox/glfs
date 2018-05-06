@@ -1,75 +1,50 @@
 #!/bin/bash
 
-executive='makesrc.sh'
-readonly torn_executive="$(echo "${executive}" | cut -d "." -f 1)"
-readonly script=".${torn_executive}"
+exe=makesrc
 
 # Native files handled
 _vars()
 {
 		# Start if 'vars' exists
-		touch ${script} || return 1
-				
-		# If $torn_executive exists, cat 'vars' to $script, thus starting "compilation"
-		cat vars > ${script} && rm vars || return 1
+		cat $exe | head -n 1 > .vars && cat vars >> .vars || return 1
 }
 
 _functions()
 {
-		local line
-		
 		while read line
 		do
-				cat $(cut -d '"' -f 2) >> ${script}
-		done < 'functions'
-
-		if [ $? -eq 0 ]
-		then
-				{ cat ${torn_executive} >> ${script} && rm -v ${torn_executive}; } || return 1
-		else
-				return 1
-		fi
+				cat $(cut -d '"' -f 2) > ./.functions
+		done < functions
 }
 
 # Return values handled
 _returns()
 {
 		ret=$?
-		if [ "$ret" -ne 0 ]
+		if [ $? ];
 		then
 				case "$ret" in 
-						'1') exit 1 ;;
+						0) return 0 ;;
+						1) echo "EXIT 1"; exit 1 ;;
 				esac
 		fi
 }
 
-# Special files handled
-#special=()
-_special()
+_finish()
 {
-		:
+		cat .functions >> .vars && rm .functions
+		sed -i '1,4 d' "$exe"
+		cat $exe >> .vars && rm $exe
+		mv .vars $exe && chmod +x $exe 
 }
 
-# Clean up
-_sweep()
-{
-		mv ${script} ${executive}
-		chmod +x ${executive}
-		rm -v ./_*
-}
-
-# Check current working directory for special files
-files=$(ls .)
-for file in "$files"
+all_files=( $(ls .) )
+for n_file in ${all_files[@]}
 do
-		case "$file" in
-				'vars') _vars; _returns ;;
-				'functions') _functions; _returns ;;
-				#"${special[@]}") : ;;
+		case "$n_file" in
+				vars) _vars; _returns ;;
+				functions) _functions; _returns ;;
 		esac
+		_finish; _returns
 done
-
-[ $? -eq 0 ] && { _sweep; }
 exit $?
-
-
