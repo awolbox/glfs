@@ -1,17 +1,17 @@
 #!/bin/bash
 
 #
-# This script will self destruct
+# WARNING: This script will self destruct in 'EOF'
 #
 
-exe=makesrc
-rawman=${exe}.1.md
+executive=makesrc
+rawman=${executive}.1.md
 
 # Native files handled
 _vars()
 {
 		# Start if 'vars' exists
-		cat $exe | head -n 1 > .vars && cat vars >> .vars || return 1
+		cat $executive | head -n 1 > .vars && cat vars >> .vars || return 1
 }
 
 _functions()
@@ -59,9 +59,9 @@ _special()
 _sweep()
 {
 		cat .funcs >> .vars && rm .funcs
-		sed -i '1,4 d' $exe
-		cat $exe >> .vars && rm $exe
-		mv .vars $exe && chmod +x $exe 
+		sed -i '1,4 d' $executive
+		cat $exe >> .vars && rm $executive
+		mv .vars $executive && chmod +x $executive
 		rm ./_*; rm vars functions
 		[ $? -eq 0 ] && _special
 }
