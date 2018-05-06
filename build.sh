@@ -60,7 +60,7 @@ _sweep()
 {
 		cat .funcs >> .vars && rm .funcs
 		sed -i '1,4 d' $executive
-		cat $exe >> .vars && rm $executive
+		cat $executive >> .vars && rm $executive
 		mv .vars $executive && chmod +x $executive
 		rm ./_*; rm vars functions
 		[ $? -eq 0 ] && _special
