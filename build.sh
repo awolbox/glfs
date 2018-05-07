@@ -4,28 +4,13 @@
 # WARNING: This script will self destruct in 'EOF'
 #
 
-readonly rawman=${executive}.1.md
-readonly color='\e[32m'
-readonly reset='\e[0m'
+executive=makesrc
+rawman=${executive}.1.md
+color='\e[32m'
+reset='\e[0m'
 
-# Setup a working directory
-_setup()
-{
-		# Check if a working setup exists
-		if [ -f functions ] && [ -f vars ];
-		then
-				return 1
-		fi
-
-		# Set native files, give an apropriate version number, and open $executive in an editor
-		touch functions vars ${executive} || return 1
-		echo "readonly VERSION=1.0" > vars || return 1
-		echo "#!/bin/bash" > ${executive} && chmod +x ${executive} || return 1
-		${editor} ${executive}
-}
-
-# Show variable information
-_list_vars()
+# Variable values
+_var_values()
 {
 		#sed '/^\s*$/d'
 		echo -e "${color}VARIABLES:${reset}"
@@ -34,8 +19,7 @@ _list_vars()
 				case $line in
 						''|\#*) continue ;;
 				esac
-						echo "$(echo -e ${color} $(echo $line | cut -d "=" -f 1 | cut -d " " -f 2\
-								) ${reset})$(echo $line | cut -d "=" -f 2 | sed 's/#.*//')"
+						echo "$(echo -e ${color} $(echo $line | cut -d "=" -f 1 | cut -d " " -f 2) ${reset})$(echo $line | cut -d "=" -f 2 | sed 's/#.*//')"
 		done < vars
 }
 
@@ -50,6 +34,13 @@ _list_functions()
 				done < functions | sed '1 d' | sed '$ d'
 }
 
+while [ $# -gt 0 ];
+do
+		case "$1" in
+				'-f') _list_functions; exit $? ;;
+				'-v') _var_values; exit $? ;;
+		esac
+done
 
 # Native files handled
 _vars()
@@ -64,9 +55,26 @@ _functions()
 		do
 				cat $(cut -d " " -f 2) > .funcs
 		done < functions
-		[ $? -ne 0 ] && { return 1; } ||  return 0
+		if [ $? -ne 0 ];
+		then
+				return 1
+		else
+				return 0
+		fi
 }
 
+# Return values handled
+_returns()
+{
+		ret=$?
+		if [ $? ];
+		then
+				case "$ret" in 
+						0) return 0 ;;
+						1) echo "EXIT 1"; exit 1 ;;
+				esac
+		fi
+}
 
 # Special files handled
 self=$(basename $0)
@@ -93,48 +101,17 @@ _sweep()
 		[ $? -eq 0 ] && _special
 }
 
-# Return values handled
-_returns()
-{
-		ret=$?
-		while [ $? ]
-		do case "$ret" in 
-				0) exit 0 ;;
-				1) echo "EXIT 1"; exit 1 ;;
-		esac done
-}
-
 # "Compile"
-# Checks to see if "native" files still exsist, if so, "merges" all files together in a certain order, then cleans up the place.
-_compile()
-{
-		all_files=( $(ls .) )
-		for n_file in ${all_files[@]}
-		do case "$n_file" in
+all_files=( $(ls .) )
+for n_file in ${all_files[@]}
+do
+		case "$n_file" in
 				vars) _vars; _returns ;;
 				functions) _functions; _returns ;;
-		esac done
-		[ $? -eq 0 ] && { _sweep; } || return 1
-}
-
-# Options
-options=$(getopt -o 'fn:v' -l 'funcs,name=:,vars' -- "$@")
-[ $? -gt 0 ] && exit 1
-eval set -- "$options"
-
-if [ $# -eq 0 ]
-then
-		echo -n "[NAME]: "
-		read executive
-		_setup
-fi
-
-while [ $# -gt 0 ]
-do
-		case "$1" in
-				'-n'|'--name=') executive=$2; _setup; returns; break ;;
-				'-f'|'--funcs') _list_functions; _returns ;;
-				'-v'|'--vars') _list_vars; _returns ;;
 		esac
 done
+
+[ $? -eq 0 ] && { _sweep; }
+exit $?
+
 
