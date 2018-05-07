@@ -6,6 +6,41 @@
 
 executive=makesrc
 rawman=${executive}.1.md
+color='\e[32m'
+reset='\e[0m'
+
+# Variable values
+_var_values()
+{
+		#sed '/^\s*$/d'
+		echo -e "${color}VARIABLES:${reset}"
+		while read -r line
+		do
+				case $line in
+						''|\#*) continue ;;
+				esac
+						echo "$(echo -e ${color} $(echo $line | cut -d "=" -f 1 | cut -d " " -f 2) ${reset})$(echo $line | cut -d "=" -f 2 | sed 's/#.*//')"
+		done < vars
+}
+
+# Show functions' "order of opertations"
+_list_functions()
+{
+		echo -e "${color}FUNCTIONS:${reset}" && \
+				while read line
+				do 
+						echo -e " ${color}(${n})${reset}\t$(echo $line | cut -d ' ' -f 2)";
+						n=$(($n + 1))
+				done < functions | sed '1 d' | sed '$ d'
+}
+
+while [ $# -gt 0 ];
+do
+		case "$1" in
+				'-f') _list_functions; exit $? ;;
+				'-v') _var_values; exit $? ;;
+		esac
+done
 
 # Native files handled
 _vars()
