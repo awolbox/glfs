@@ -27,7 +27,7 @@ _var_values()
 _list_functions()
 {
 		echo -e "${color}FUNCTIONS:${reset}" && \
-				while read line
+				while read -r line
 				do 
 						echo -e " ${color}(${n})${reset}\t$(echo $line | cut -d ' ' -f 2)";
 						n=$(($n + 1))
